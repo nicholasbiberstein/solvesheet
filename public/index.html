@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolveSheet — Every Equation. Every Course.</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs (loaded via CDN — no build step needed) -->
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app":       "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+    "firebase/auth":      "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+  }
+}
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════ */
+:root {
+  --night:#0b0e14; --night2:#131720; --night3:#1a2030;
+  --steel:#252d3d; --wire:#2e3a4e; --mist:#8a9ab5;
+  --fog:#c4cdd8; --snow:#eef1f5; --white:#ffffff;
+  --gold:#d4a843; --gold2:#f0c460; --teal:#2dd4bf;
+  --red:#e05252; --green:#3ecf8e;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --serif:'Fraunces',serif;
+  --r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--snow);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--sans)}
+input,select{font-family:var(--sans)}
+
+/* ── PAGE SYSTEM ─────────────────────────────── */
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+
+/* ── LOADING OVERLAY ─────────────────────────── */
+#loadingOverlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--night);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+  transition:opacity .3s;
+}
+#loadingOverlay.hidden{opacity:0;pointer-events:none}
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid rgba(212,168,67,.2);
+  border-top-color:var(--gold);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-label{font-family:var(--mono);font-size:0.72rem;color:var(--mist);letter-spacing:0.08em}
+
+/* ── SHARED NAV ──────────────────────────────── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;
+  padding:0 48px;height:64px;
+  background:rgba(11,14,20,.88);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.nav-logo{font-family:var(--serif);font-size:1.35rem;font-weight:700;color:var(--white);letter-spacing:-.02em;margin-right:auto}
+.nav-logo span{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-link{font-size:.85rem;font-weight:500;color:var(--mist);padding:8px 14px;border-radius:6px;background:none;border:none;transition:color .15s,background .15s}
+.nav-link:hover{color:var(--white);background:rgba(255,255,255,.06)}
+.nav-cta{font-size:.85rem;font-weight:600;background:var(--gold);color:var(--night);padding:8px 18px;border-radius:6px;border:none;transition:background .15s;margin-left:4px}
+.nav-cta:hover{background:var(--gold2)}
+
+/* ── LANDING ─────────────────────────────────── */
+#page-landing{background:var(--night)}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 80px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(212,168,67,.12) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(45,212,191,.07) 0%,transparent 50%)}
+.hero-bg::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:60px 60px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.7rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:6px 14px;margin-bottom:28px;position:relative;z-index:1;animation:fadeUp .6s ease both}
+.hero-badge::before{content:'●';font-size:8px;animation:pulse 2s infinite}
+.hero h1{font-family:var(--serif);font-size:clamp(2.8rem,7vw,5.5rem);font-weight:900;line-height:1.0;letter-spacing:-.03em;color:var(--white);margin-bottom:24px;position:relative;z-index:1;animation:fadeUp .6s .1s ease both}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:1.15rem;color:var(--mist);max-width:520px;line-height:1.65;margin-bottom:40px;position:relative;z-index:1;animation:fadeUp .6s .2s ease both}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;animation:fadeUp .6s .3s ease both}
+.btn-primary{background:var(--gold);color:var(--night);font-weight:700;font-size:.95rem;padding:14px 28px;border-radius:8px;border:none;transition:background .15s,box-shadow .15s}
+.btn-primary:hover{background:var(--gold2);box-shadow:0 0 32px rgba(212,168,67,.3)}
+.btn-ghost{background:none;color:var(--fog);font-weight:500;font-size:.95rem;padding:14px 24px;border-radius:8px;border:1px solid rgba(255,255,255,.12);transition:border-color .15s,color .15s}
+.btn-ghost:hover{border-color:rgba(255,255,255,.3);color:var(--white)}
+.hero-note{margin-top:18px;font-size:.78rem;color:var(--mist);position:relative;z-index:1;animation:fadeUp .6s .4s ease both}
+.hero-chips{margin-top:64px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;animation:fadeUp .6s .5s ease both}
+.chip{display:flex;align-items:center;gap:10px;background:var(--night2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 16px;font-size:.82rem}
+.chip-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.chip-dot.y{background:var(--gold)}.chip-dot.b{background:var(--teal)}
+.chip span{color:var(--fog)}.chip strong{color:var(--white);margin-right:4px}
+
+.section{padding:96px 24px}
+.section-inner{max-width:1080px;margin:0 auto}
+.section-label{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--white);margin-bottom:16px}
+.section-sub{font-size:1rem;color:var(--mist);max-width:480px;line-height:1.65;margin-bottom:56px}
+
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.step-card{background:var(--night2);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:28px 24px;transition:border-color .2s,transform .2s}
+.step-card:hover{border-color:rgba(212,168,67,.3);transform:translateY(-3px)}
+.step-num{font-family:var(--serif);font-size:3rem;font-weight:900;color:rgba(212,168,67,.15);line-height:1;margin-bottom:16px}
+.step-card h3{font-size:1rem;font-weight:600;color:var(--white);margin-bottom:8px}
+.step-card p{font-size:.85rem;color:var(--mist);line-height:1.6}
+
+.courses-scroll{display:flex;gap:16px;overflow-x:auto;padding-bottom:16px;scrollbar-width:none}
+.courses-scroll::-webkit-scrollbar{display:none}
+.cpc{background:var(--night2);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:20px 22px;min-width:220px;flex-shrink:0;transition:border-color .15s,transform .15s;cursor:pointer}
+.cpc:hover{border-color:rgba(212,168,67,.4);transform:translateY(-2px)}
+.cpc-tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.cpc-name{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--white);margin-bottom:6px;line-height:1.2}
+.cpc-count{font-size:.78rem;color:var(--mist)}
+.cpc-badge{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:.62rem;padding:3px 8px;border-radius:100px;background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.25)}
+.cpc-badge.soon{background:rgba(138,154,181,.1);color:var(--mist);border-color:rgba(138,154,181,.2)}
+
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:760px}
+.price-card{background:var(--night2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:32px 28px;position:relative;transition:transform .2s}
+.price-card:hover{transform:translateY(-4px)}
+.price-card.featured{border-color:var(--gold);background:linear-gradient(135deg,rgba(212,168,67,.08) 0%,var(--night2) 60%)}
+.price-card.featured::before{content:'MOST POPULAR';position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.6rem;font-weight:500;letter-spacing:.12em;background:var(--gold);color:var(--night);padding:3px 12px;border-radius:100px}
+.price-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);margin-bottom:16px}
+.price-amount{display:flex;align-items:baseline;gap:4px;margin-bottom:6px}
+.price-amount .dollar{font-family:var(--serif);font-size:2.8rem;font-weight:900;color:var(--white);letter-spacing:-.03em}
+.price-amount .period{font-size:.85rem;color:var(--mist)}
+.price-desc{font-size:.82rem;color:var(--mist);margin-bottom:24px;line-height:1.5}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.price-features li{display:flex;align-items:flex-start;gap:10px;font-size:.85rem;color:var(--fog)}
+.price-features li::before{content:'✓';color:var(--green);flex-shrink:0;font-weight:700;margin-top:1px}
+.price-btn{width:100%;padding:12px;border-radius:7px;border:none;font-weight:600;font-size:.9rem;transition:all .15s}
+.price-btn.primary{background:var(--gold);color:var(--night)}.price-btn.primary:hover{background:var(--gold2)}
+.price-btn.outline{background:none;color:var(--fog);border:1px solid rgba(255,255,255,.15)}.price-btn.outline:hover{border-color:rgba(255,255,255,.35);color:var(--white)}
+
+.faq-list{max-width:640px;display:flex;flex-direction:column}
+.faq-item{border-bottom:1px solid rgba(255,255,255,.07)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:20px 0;cursor:pointer;font-size:.95rem;font-weight:500;color:var(--snow);background:none;border:none;text-align:left;width:100%;transition:color .15s}
+.faq-q:hover{color:var(--gold)}
+.faq-q .fi{font-size:1.2rem;color:var(--mist);flex-shrink:0;transition:transform .2s}
+.faq-item.open .fi{transform:rotate(45deg)}
+.faq-a{font-size:.88rem;color:var(--mist);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .3s,padding .3s}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:20px}
+.footer{border-top:1px solid rgba(255,255,255,.06);padding:48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--white)}
+.footer-logo span{color:var(--gold)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:.82rem;color:var(--mist);transition:color .15s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{font-size:.78rem;color:var(--mist)}
+
+/* ── AUTH PAGES ──────────────────────────────── */
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;background:var(--night);position:relative}
+.auth-page::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(212,168,67,.08) 0%,transparent 55%);pointer-events:none}
+.auth-box{background:var(--night2);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:44px 40px;width:100%;max-width:440px;position:relative;z-index:1;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.auth-logo{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--white);text-align:center;margin-bottom:28px}
+.auth-logo span{color:var(--gold)}
+.auth-title{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--white);margin-bottom:6px}
+.auth-sub{font-size:.85rem;color:var(--mist);margin-bottom:28px;line-height:1.5}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:.78rem;font-weight:500;color:var(--fog);margin-bottom:6px}
+.form-input{width:100%;background:var(--night3);border:1.5px solid rgba(255,255,255,.1);border-radius:7px;padding:11px 14px;font-size:.9rem;color:var(--white);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:var(--mist)}
+.form-submit{width:100%;padding:13px;background:var(--gold);color:var(--night);font-size:.95rem;font-weight:700;border:none;border-radius:7px;margin-top:8px;transition:background .15s;position:relative}
+.form-submit:hover{background:var(--gold2)}
+.form-submit:disabled{opacity:.6;cursor:not-allowed}
+.auth-switch{text-align:center;margin-top:20px;font-size:.83rem;color:var(--mist)}
+.auth-switch button{background:none;border:none;color:var(--gold);font-weight:600;cursor:pointer}
+.auth-switch button:hover{text-decoration:underline}
+.auth-error{background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.3);color:#f87171;border-radius:6px;padding:10px 14px;font-size:.82rem;margin-bottom:16px;display:none}
+.auth-error.visible{display:block}
+
+/* ── PAYWALL ─────────────────────────────────── */
+.paywall-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;background:var(--night);position:relative}
+.paywall-page::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(212,168,67,.07) 0%,transparent 60%);pointer-events:none}
+.paywall-box{max-width:520px;width:100%;text-align:center;position:relative;z-index:1}
+.pw-icon{font-size:3rem;margin-bottom:16px}
+.paywall-box h2{font-family:var(--serif);font-size:2rem;font-weight:900;color:var(--white);margin-bottom:12px;letter-spacing:-.02em}
+.paywall-box p{font-size:.9rem;color:var(--mist);line-height:1.7;margin-bottom:36px}
+.paywall-plans{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
+.pw-plan{flex:1;min-width:140px;background:var(--night2);border:2px solid rgba(255,255,255,.08);border-radius:var(--r);padding:20px 16px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative}
+.pw-plan:hover{border-color:rgba(212,168,67,.5);transform:translateY(-2px)}
+.pw-plan.selected{border-color:var(--gold);background:rgba(212,168,67,.06)}
+.pw-period{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);margin-bottom:8px}
+.pw-price{font-family:var(--serif);font-size:1.8rem;font-weight:900;color:var(--white);letter-spacing:-.03em;margin-bottom:2px}
+.pw-note{font-size:.72rem;color:var(--mist)}
+.pw-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;background:var(--gold);color:var(--night);padding:2px 10px;border-radius:100px;white-space:nowrap}
+.pw-subscribe{width:100%;padding:14px;background:var(--gold);color:var(--night);font-family:var(--serif);font-size:1rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:background .15s;margin-bottom:12px}
+.pw-subscribe:hover{background:var(--gold2)}
+.pw-subscribe:disabled{opacity:.6;cursor:not-allowed}
+.pw-legal{font-size:.75rem;color:var(--mist);line-height:1.5}
+.pw-legal a{color:var(--gold)}
+
+/* ── DASHBOARD ───────────────────────────────── */
+#page-dashboard{background:var(--night);padding-top:64px}
+.dash-layout{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{width:240px;flex-shrink:0;background:var(--night2);border-right:1px solid rgba(255,255,255,.06);padding:28px 0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-section{padding:0 16px;margin-bottom:28px}
+.sidebar-label{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);padding:0 8px;margin-bottom:6px}
+.sb-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;background:none;border:none;color:var(--mist);font-size:.85rem;border-radius:7px;text-align:left;transition:background .12s,color .12s}
+.sb-btn:hover{background:rgba(255,255,255,.06);color:var(--snow)}
+.sb-btn.active{background:rgba(212,168,67,.12);color:var(--gold)}
+.sidebar-divider{height:1px;background:rgba(255,255,255,.06);margin:4px 16px 12px}
+.sidebar-pinned{padding:0 16px;flex:1}
+.pin-course-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;background:none;border:none;color:var(--mist);font-size:.82rem;border-radius:7px;text-align:left;transition:background .12s,color .12s}
+.pin-course-btn:hover{background:rgba(255,255,255,.06);color:var(--snow)}
+.pin-code{font-family:var(--mono);font-size:.72rem;color:var(--gold);font-weight:500}
+.sidebar-footer{padding:16px;margin-top:auto}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.04);border-radius:8px;cursor:pointer;transition:background .12s}
+.user-chip:hover{background:rgba(255,255,255,.08)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:.85rem;font-weight:700;color:var(--night);flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:.82rem;font-weight:600;color:var(--snow);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-plan{font-size:.7rem;color:var(--gold);font-family:var(--mono)}
+.dash-main{flex:1;padding:36px 40px;overflow-y:auto;min-width:0}
+.dash-header{margin-bottom:36px}
+.dash-header h2{font-family:var(--serif);font-size:1.8rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.dash-header p{font-size:.88rem;color:var(--mist)}
+.search-bar{display:flex;align-items:center;gap:12px;background:var(--night2);border:1.5px solid rgba(255,255,255,.09);border-radius:9px;padding:11px 16px;margin-bottom:36px;transition:border-color .15s}
+.search-bar:focus-within{border-color:var(--gold)}
+.search-bar input{flex:1;background:none;border:none;outline:none;color:var(--snow);font-size:.9rem}
+.search-bar input::placeholder{color:var(--mist)}
+.dash-sec-title{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.dash-sec-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:40px}
+.course-card{background:var(--night2);border:1.5px solid rgba(255,255,255,.07);border-radius:var(--r);padding:18px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;position:relative}
+.course-card:hover{border-color:rgba(212,168,67,.4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.course-card.pinned{border-color:rgba(212,168,67,.25)}
+.cc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.cc-code{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.pin-btn{background:none;border:none;font-size:14px;color:var(--mist);padding:2px;border-radius:4px;transition:color .12s;line-height:1}
+.pin-btn:hover{color:var(--gold)}.pin-btn.pinned{color:var(--gold)}
+.cc-name{font-family:var(--serif);font-size:.95rem;font-weight:700;color:var(--white);line-height:1.25;margin-bottom:8px}
+.cc-meta{font-size:.75rem;color:var(--mist)}
+.cc-bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:14px;overflow:hidden}
+.cc-bar-fill{height:100%;background:var(--gold);border-radius:2px}
+.course-card.cs{opacity:.5;pointer-events:none}
+.cc-soon{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(138,154,181,.12);color:var(--mist);padding:3px 7px;border-radius:4px}
+
+/* ── COURSE PAGE ─────────────────────────────── */
+#page-course{background:var(--night);padding-top:64px}
+.course-layout{display:flex;min-height:calc(100vh - 64px)}
+.course-sidebar{width:260px;flex-shrink:0;background:var(--night2);border-right:1px solid rgba(255,255,255,.06);padding:24px 0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+.cs-head{padding:0 20px 20px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:16px}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;font-size:.8rem;color:var(--mist);margin-bottom:14px;padding:0;transition:color .12s}
+.back-btn:hover{color:var(--gold)}
+.cs-code{font-family:var(--mono);font-size:.65rem;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.cs-head h3{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--white);line-height:1.2}
+.tab-list{padding:0 12px;display:flex;flex-direction:column;gap:2px}
+.tab-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;background:none;border:none;color:var(--mist);font-size:.82rem;text-align:left;transition:background .12s,color .12s;width:100%}
+.tab-item:hover{background:rgba(255,255,255,.06);color:var(--snow)}
+.tab-item.active{background:rgba(212,168,67,.1);color:var(--gold)}
+.tab-item .ti-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.6}
+.course-main{flex:1;padding:32px 36px;overflow-y:auto;min-width:0}
+.cm-header{margin-bottom:28px}
+.cm-header h2{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.cm-header p{font-size:.83rem;color:var(--mist)}
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:32px}
+.eq-card{background:var(--night3);border:1.5px solid rgba(255,255,255,.07);border-radius:var(--r);padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative}
+.eq-card:hover{border-color:rgba(212,168,67,.35);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.eq-card.selected{border-color:var(--gold);background:rgba(212,168,67,.06);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
+.eq-ref{font-family:var(--mono);font-size:.6rem;color:var(--mist);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.eq-card-name{font-family:var(--serif);font-size:.88rem;font-weight:700;color:var(--snow);margin-bottom:6px;line-height:1.2}
+.eq-formula{font-family:var(--mono);font-size:.78rem;color:#6a9fd8;background:rgba(106,159,216,.08);border-radius:5px;padding:5px 8px;margin-bottom:5px;line-height:1.4}
+.eq-desc{font-size:.73rem;color:var(--mist);line-height:1.4}
+.eq-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.15);background:var(--night3);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s}
+.eq-card.selected .eq-check{background:var(--gold);border-color:var(--gold);color:var(--night)}
+.sel-banner{background:var(--night3);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--gold);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;display:none}
+.sel-banner.visible{display:block}
+.sb-lbl{font-family:var(--mono);font-size:.62rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sb-name{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.sb-formula{font-family:var(--mono);font-size:.88rem;color:#6a9fd8}
+.gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.gf-panel{background:var(--night3);border:1.5px solid rgba(255,255,255,.07);border-radius:var(--r);overflow:hidden}
+.gf-head{padding:12px 16px;background:var(--night2);font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--mist)}
+.gf-head.g{color:#6a9fd8}.gf-head.f{color:var(--teal)}
+.chk-list{padding:8px 10px;max-height:200px;overflow-y:auto;border-bottom:1px solid rgba(255,255,255,.06)}
+.chk-list::-webkit-scrollbar{width:3px}
+.chk-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.chk-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .1s;user-select:none}
+.chk-row:hover{background:rgba(255,255,255,.05)}
+.chk-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--gold);flex-shrink:0}
+.chk-sym{font-family:var(--mono);font-size:.78rem;color:#6a9fd8;font-weight:500}
+.chk-desc{font-size:.72rem;color:var(--mist)}
+.var-fields{padding:10px}
+.vf-row{display:flex;align-items:center;gap:8px;background:var(--night2);border:1px solid rgba(255,255,255,.07);border-radius:7px;padding:8px 10px;margin-bottom:8px}
+.vf-sym{font-family:var(--mono);font-size:.8rem;font-weight:500;color:#f0883e;width:64px;flex-shrink:0}
+.vf-desc{font-size:.72rem;color:var(--mist);flex:1}
+.vf-row input[type=number]{width:100px;flex-shrink:0;background:var(--night3);border:1.5px solid rgba(255,255,255,.1);border-radius:5px;padding:6px 8px;font-family:var(--mono);font-size:.83rem;color:var(--snow);outline:none;transition:border-color .15s}
+.vf-row input[type=number]:focus{border-color:var(--gold)}
+.vf-row select{width:96px;flex-shrink:0;background:var(--night3);border:1.5px solid rgba(255,255,255,.1);border-radius:5px;padding:6px 8px;font-family:var(--mono);font-size:.75rem;color:var(--snow);outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%238a9ab5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;padding-right:22px}
+.vf-row select:focus{border-color:var(--gold)}
+.vf-row.fr{background:rgba(45,212,191,.04);border-color:rgba(45,212,191,.2)}
+.vf-row.fr input[type=number]{display:none}
+.vf-row.fr .vf-sym{color:var(--teal)}
+.no-sel{font-size:.78rem;color:var(--mist);font-style:italic;padding:8px 4px}
+.calc-sticky{position:sticky;bottom:0;background:linear-gradient(to top,var(--night) 70%,transparent);padding:16px 0 0;display:none}
+.calc-sticky.visible{display:block}
+.calc-btn-main{width:100%;padding:15px;background:var(--gold);color:var(--night);font-family:var(--serif);font-size:1rem;font-weight:700;letter-spacing:.02em;border:none;border-radius:9px;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:10px}
+.calc-btn-main:hover{background:var(--gold2)}
+.result-panel{margin-top:20px;background:var(--night2);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;display:none}
+.result-panel.visible{display:block}
+.rp-head{padding:14px 20px;background:var(--night3);border-bottom:1px solid rgba(255,255,255,.06);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mist)}
+.rp-body{padding:20px}
+.rstep{display:flex;gap:12px;margin-bottom:14px}
+.rs-num{font-family:var(--mono);font-size:.62rem;color:#4a6080;background:var(--night3);border:1px solid rgba(255,255,255,.06);border-radius:4px;padding:2px 7px;white-space:nowrap;margin-top:3px;flex-shrink:0}
+.rs-content{flex:1}
+.rs-title{font-size:.62rem;color:#4a6080;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.rs-body{font-family:var(--mono);font-size:.85rem;color:#c8d8f0;background:var(--night3);border:1px solid rgba(255,255,255,.06);border-radius:5px;padding:8px 12px;line-height:1.5;word-break:break-all}
+.rs-body.answer{border-color:var(--green);color:var(--green);font-size:1.05rem;font-weight:500}
+.rs-body.sub{color:#f0883e}
+.err-strip{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);color:#f87171;border-radius:7px;padding:10px 14px;font-family:var(--mono);font-size:.8rem;margin-bottom:16px;display:none}
+.err-strip.visible{display:block}
+.pay-success-banner{background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.3);color:var(--green);border-radius:8px;padding:12px 16px;font-size:.85rem;margin-bottom:20px;display:none;align-items:center;gap:10px}
+.pay-success-banner.visible{display:flex}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media(max-width:900px){
+  .sidebar,.course-sidebar{display:none}
+  .dash-main,.course-main{padding:24px 20px}
+  .nav{padding:0 20px}
+  .footer{padding:32px 20px;flex-direction:column;align-items:flex-start}
+}
+@media(max-width:600px){
+  .hero h1{font-size:2.4rem}
+  .gf-grid{grid-template-columns:1fr}
+  .nav-links .nav-link{display:none}
+  .pricing-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="spinner-label">Loading SolveSheet...</div>
+</div>
+
+<!-- SHARED NAV -->
+<nav class="nav" id="mainNav">
+  <div class="nav-logo">Solve<span>Sheet</span></div>
+  <div class="nav-links">
+    <button class="nav-link" onclick="showPage('landing')">Home</button>
+    <button class="nav-link" onclick="scrollTo('pricing')">Pricing</button>
+    <button class="nav-link" id="navDashBtn" style="display:none" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-link" id="navLoginBtn" onclick="showPage('login')">Log In</button>
+    <button class="nav-cta"  id="navSignupBtn" onclick="showPage('signup')">Start Free Trial</button>
+    <button class="nav-cta"  id="navLogoutBtn" style="display:none" onclick="doLogout()">Log Out</button>
+  </div>
+</nav>
+
+<!-- ══════════════ PAGE: LANDING ══════════════ -->
+<div id="page-landing" class="page">
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-badge">Now Live — EV350 Environmental Engineering</div>
+    <h1>Every equation.<br><em>Every course.</em></h1>
+    <p class="hero-sub">Stop hunting through equation sheets. SolveSheet gives you step-by-step solutions for every formula in your engineering curriculum — organized by course, solved instantly.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('signup')">Start Free Trial — 7 Days</button>
+      <button class="btn-ghost" onclick="scrollTo('how')">See How It Works</button>
+    </div>
+    <p class="hero-note">No credit card required to start. Then $4.99/month.</p>
+    <div class="hero-chips">
+      <div class="chip"><div class="chip-dot"></div><strong>EV350</strong><span>Environmental Eng.</span></div>
+      <div class="chip"><div class="chip-dot y"></div><strong>CE301</strong><span>Structural Analysis</span></div>
+      <div class="chip"><div class="chip-dot b"></div><strong>ME310</strong><span>Thermodynamics</span></div>
+      <div class="chip"><div class="chip-dot y"></div><strong>CHE220</strong><span>Fluid Mechanics</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="how" style="background:var(--night2)">
+    <div class="section-inner">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Solve any equation<br>in three steps.</h2>
+      <p class="section-sub">No more rearranging formulas by hand. Pick what you know, pick what you want, hit calculate.</p>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">01</div><h3>Select your equation</h3><p>Browse by course and category. Every equation from your class equation sheet, organized and searchable.</p></div>
+        <div class="step-card"><div class="step-num">02</div><h3>Check givens &amp; finds</h3><p>Select which variables you know and which one you're solving for. Enter values and pick your units.</p></div>
+        <div class="step-card"><div class="step-num">03</div><h3>Get step-by-step work</h3><p>See the equation, the rearrangement, the substitution, and the final answer — all shown clearly.</p></div>
+        <div class="step-card"><div class="step-num">04</div><h3>New courses monthly</h3><p>Your subscription covers every course we add. Statics, Thermo, Fluids, Circuits — all coming continuously.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="courses">
+    <div class="section-inner">
+      <div class="section-label">Course Library</div>
+      <h2 class="section-title">Your whole curriculum.<br>One subscription.</h2>
+      <p class="section-sub">One course live now. More shipping every month based on what students request most.</p>
+      <div class="courses-scroll">
+        <div class="cpc" onclick="showPage('signup')"><div class="cpc-tag">EV350</div><div class="cpc-name">Environmental Engineering</div><div class="cpc-count">28 equations · 4 categories</div><div class="cpc-badge">Live Now</div></div>
+        <div class="cpc"><div class="cpc-tag">CE301</div><div class="cpc-name">Structural Analysis</div><div class="cpc-count">Coming soon</div><div class="cpc-badge soon">Q3 2025</div></div>
+        <div class="cpc"><div class="cpc-tag">ME310</div><div class="cpc-name">Thermodynamics</div><div class="cpc-count">Coming soon</div><div class="cpc-badge soon">Q3 2025</div></div>
+        <div class="cpc"><div class="cpc-tag">CHE220</div><div class="cpc-name">Fluid Mechanics</div><div class="cpc-count">Coming soon</div><div class="cpc-badge soon">Q4 2025</div></div>
+        <div class="cpc"><div class="cpc-tag">EE201</div><div class="cpc-name">Circuit Analysis</div><div class="cpc-count">Coming soon</div><div class="cpc-badge soon">Q4 2025</div></div>
+        <div class="cpc"><div class="cpc-tag">CE210</div><div class="cpc-name">Statics</div><div class="cpc-count">Coming soon</div><div class="cpc-badge soon">Q4 2025</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing" style="background:var(--night2)">
+    <div class="section-inner">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Less than a coffee.<br>Every month.</h2>
+      <p class="section-sub">One price gets you every course we have and everything we add. Cancel anytime.</p>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-label">Monthly</div>
+          <div class="price-amount"><span class="dollar">$4.99</span><span class="period">/ month</span></div>
+          <div class="price-desc">Billed monthly. Cancel anytime.</div>
+          <ul class="price-features"><li>All current courses</li><li>Every new course added</li><li>Step-by-step solutions</li><li>Unit conversion built in</li></ul>
+          <button class="price-btn outline" onclick="showPage('signup')">Start 7-Day Free Trial</button>
+        </div>
+        <div class="price-card featured">
+          <div class="price-label">Semester</div>
+          <div class="price-amount"><span class="dollar">$12.99</span><span class="period">/ semester</span></div>
+          <div class="price-desc">Best value. Covers a full semester.</div>
+          <ul class="price-features"><li>Everything in Monthly</li><li>Save 35% vs monthly</li><li>Perfect timing for a semester</li><li>Priority access to new courses</li></ul>
+          <button class="price-btn primary" onclick="showPage('signup')">Start 7-Day Free Trial</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="section-inner">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Questions.</h2>
+      <div class="faq-list">
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What courses are available right now? <span class="fi">+</span></button><div class="faq-a">EV350 Environmental Engineering is live with 28 equations across 4 categories. New courses are added every 2–4 weeks.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What does "step-by-step" actually mean? <span class="fi">+</span></button><div class="faq-a">For every calculation you see: (1) the original equation, (2) the algebraic rearrangement for your unknown, (3) the substitution with your numbers, and (4) the final answer with units.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can I request a course? <span class="fi">+</span></button><div class="faq-a">Yes — subscribers can submit course requests and we prioritize based on demand. If 20+ students request the same course it gets fast-tracked.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How do I cancel? <span class="fi">+</span></button><div class="faq-a">Cancel anytime from your account settings in one click. You keep access until the end of your current billing period.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is this allowed for exams? <span class="fi">+</span></button><div class="faq-a">SolveSheet is a calculation aid — the same as using a graphing calculator. Always check your institution's academic integrity policy for exam rules.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-logo">Solve<span>Sheet</span></div>
+    <div class="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
+    <div class="footer-copy">© 2025 SolveSheet. All rights reserved.</div>
+  </footer>
+</div>
+
+<!-- ══════════════ PAGE: LOGIN ══════════════ -->
+<div id="page-login" class="page">
+  <div class="auth-page">
+    <div class="auth-box">
+      <div class="auth-logo">Solve<span>Sheet</span></div>
+      <h2 class="auth-title">Welcome back.</h2>
+      <p class="auth-sub">Sign in to access your courses and continue solving.</p>
+      <div class="auth-error" id="loginError"></div>
+      <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="loginEmail" placeholder="you@university.edu"></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="form-submit" id="loginBtn" onclick="doLogin()">Sign In</button>
+      <div class="auth-switch">Don't have an account? <button onclick="showPage('signup')">Sign up free</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: SIGNUP ══════════════ -->
+<div id="page-signup" class="page">
+  <div class="auth-page">
+    <div class="auth-box">
+      <div class="auth-logo">Solve<span>Sheet</span></div>
+      <h2 class="auth-title">Start your free trial.</h2>
+      <p class="auth-sub">7 days free, then $4.99/month or $12.99/semester. Cancel anytime.</p>
+      <div class="auth-error" id="signupError"></div>
+      <div class="form-group"><label class="form-label">Full name</label><input class="form-input" type="text" id="signupName" placeholder="Jane Smith"></div>
+      <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="signupEmail" placeholder="you@university.edu"></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="signupPassword" placeholder="At least 8 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <button class="form-submit" id="signupBtn" onclick="doSignup()">Create Account &amp; Start Trial</button>
+      <div class="auth-switch">Already have an account? <button onclick="showPage('login')">Sign in</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: PAYWALL ══════════════ -->
+<div id="page-paywall" class="page">
+  <div class="paywall-page">
+    <div class="paywall-box">
+      <div class="pw-icon">🎓</div>
+      <h2>Your trial is active.</h2>
+      <p>You have 7 days free. Choose a plan to keep access after your trial ends. You won't be charged until day 8.</p>
+      <div class="paywall-plans">
+        <div class="pw-plan" id="planMonthly" onclick="selectPlan('monthly')">
+          <div class="pw-period">Monthly</div><div class="pw-price">$4.99</div><div class="pw-note">per month</div>
+        </div>
+        <div class="pw-plan selected" id="planSemester" onclick="selectPlan('semester')">
+          <div class="pw-badge">Best Value</div>
+          <div class="pw-period">Semester</div><div class="pw-price">$12.99</div><div class="pw-note">one semester</div>
+        </div>
+      </div>
+      <button class="pw-subscribe" id="pwBtn" onclick="startPayment()">Subscribe &amp; Get Full Access →</button>
+      <div class="pw-legal">By continuing you agree to our <a href="#">Terms of Service</a>. Payment processed securely by Stripe.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: DASHBOARD ══════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dash-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Menu</div>
+        <button class="sb-btn active" onclick="showPage('dashboard')">⊞ Dashboard</button>
+        <button class="sb-btn">⚙ Account &amp; Billing</button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-pinned">
+        <div class="sidebar-label">Pinned Courses</div>
+        <button class="pin-course-btn" onclick="openCourse()"><span class="pin-code">EV350</span>&nbsp; Environmental Eng.</button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" id="dashAvatar">?</div>
+          <div class="user-info">
+            <div class="user-name" id="dashUserName">Loading...</div>
+            <div class="user-plan" id="dashUserPlan">—</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="dash-main">
+      <div class="dash-header">
+        <h2 id="dashGreeting">Loading...</h2>
+        <p>You have access to all current courses and every new one we add.</p>
+      </div>
+      <div class="search-bar">
+        <span style="color:var(--mist)">⌕</span>
+        <input type="text" placeholder="Search courses or equations..." oninput="filterCourses(this.value)">
+      </div>
+      <div class="dash-sec-title">Pinned Courses</div>
+      <div class="courses-grid">
+        <div class="course-card pinned" onclick="openCourse()">
+          <div class="cc-top"><div class="cc-code">EV350</div><button class="pin-btn pinned" onclick="event.stopPropagation()">📌</button></div>
+          <div class="cc-name">Environmental Engineering</div>
+          <div class="cc-meta">28 equations · 4 categories</div>
+          <div class="cc-bar"><div class="cc-bar-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="dash-sec-title">All Courses</div>
+      <div class="courses-grid" id="allCoursesGrid">
+        <div class="course-card" onclick="openCourse()">
+          <div class="cc-top"><div class="cc-code">EV350</div><button class="pin-btn pinned" onclick="event.stopPropagation()">📌</button></div>
+          <div class="cc-name">Environmental Engineering</div>
+          <div class="cc-meta">28 equations · 4 categories</div>
+          <div class="cc-bar"><div class="cc-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="course-card cs"><div class="cc-top"><div class="cc-code">CE301</div><span class="cc-soon">Soon</span></div><div class="cc-name">Structural Analysis</div><div class="cc-meta">Coming Q3 2025</div></div>
+        <div class="course-card cs"><div class="cc-top"><div class="cc-code">ME310</div><span class="cc-soon">Soon</span></div><div class="cc-name">Thermodynamics</div><div class="cc-meta">Coming Q3 2025</div></div>
+        <div class="course-card cs"><div class="cc-top"><div class="cc-code">CHE220</div><span class="cc-soon">Soon</span></div><div class="cc-name">Fluid Mechanics</div><div class="cc-meta">Coming Q4 2025</div></div>
+        <div class="course-card cs"><div class="cc-top"><div class="cc-code">EE201</div><span class="cc-soon">Soon</span></div><div class="cc-name">Circuit Analysis</div><div class="cc-meta">Coming Q4 2025</div></div>
+        <div class="course-card cs"><div class="cc-top"><div class="cc-code">CE210</div><span class="cc-soon">Soon</span></div><div class="cc-name">Statics</div><div class="cc-meta">Coming Q4 2025</div></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE: COURSE ══════════════ -->
+<div id="page-course" class="page">
+  <div class="course-layout">
+    <aside class="course-sidebar">
+      <div class="cs-head">
+        <button class="back-btn" onclick="showPage('dashboard')">← Dashboard</button>
+        <div class="cs-code">EV350</div>
+        <h3>Environmental Engineering</h3>
+      </div>
+      <div class="tab-list">
+        <button class="tab-item active" onclick="switchTab('fundamentals',this)"><span class="ti-dot"></span>EV Fundamentals</button>
+        <button class="tab-item" onclick="switchTab('drinking',this)"><span class="ti-dot"></span>Drinking Water</button>
+        <button class="tab-item" onclick="switchTab('wastewater',this)"><span class="ti-dot"></span>Wastewater</button>
+        <button class="tab-item" onclick="switchTab('air',this)"><span class="ti-dot"></span>Air Pollution</button>
+      </div>
+    </aside>
+    <main class="course-main">
+      <!-- Mobile tab selector -->
+      <select id="mobileTabSel" onchange="switchTab(this.value,null)" style="display:none;background:var(--night2);border:1px solid rgba(255,255,255,.1);color:var(--snow);padding:9px 12px;border-radius:7px;width:100%;font-size:.88rem;margin-bottom:20px">
+        <option value="fundamentals">EV Fundamentals</option>
+        <option value="drinking">Drinking Water</option>
+        <option value="wastewater">Wastewater</option>
+        <option value="air">Air Pollution</option>
+      </select>
+      <div class="cm-header">
+        <h2 id="tabTitle">EV Fundamentals</h2>
+        <p id="tabDesc">Mass balance, first-order decay, environmental chemistry equations</p>
+      </div>
+      <div class="eq-grid" id="eqGrid"></div>
+      <div class="sel-banner" id="selBanner">
+        <div class="sb-lbl">Selected Equation</div>
+        <div class="sb-name" id="sbName"></div>
+        <div class="sb-formula" id="sbFormula"></div>
+      </div>
+      <div class="gf-grid" id="gfGrid" style="display:none">
+        <div class="gf-panel">
+          <div class="gf-head g">✓ Givens — Select What You Know</div>
+          <div class="chk-list" id="givensList"></div>
+          <div class="var-fields" id="givensFields"></div>
+        </div>
+        <div class="gf-panel">
+          <div class="gf-head f">? Finds — Select What To Solve For</div>
+          <div class="chk-list" id="findsList"></div>
+          <div class="var-fields" id="findsFields"></div>
+        </div>
+      </div>
+      <div class="err-strip" id="errStrip"></div>
+      <div class="result-panel" id="resultPanel">
+        <div class="rp-head">Solution — Step by Step</div>
+        <div class="rp-body" id="rpBody"></div>
+      </div>
+      <div class="calc-sticky" id="calcSticky">
+        <button class="calc-btn-main" onclick="doCalculate()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 6h6M6 9h6M6 12h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Calculate
+        </button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT — Firebase + App Logic
+══════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp }    from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         signOut, onAuthStateChanged, updateProfile } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
+  from "firebase/firestore";
+
+// ================================================================
+// ▼▼▼  PASTE YOUR FIREBASE CONFIG HERE  ▼▼▼
+// Get this from Firebase Console > Project Settings > Your Apps
+// ================================================================
+const firebaseConfig = {
+  apiKey:            "AIzaSyBfet--OkGkmMT2qFbutiML6844nXZkkdM",
+  authDomain:        "solvesheet.firebaseapp.com",
+  projectId:         "solvesheet",
+  storageBucket:     "solvesheet.firebasestorage.app",
+  messagingSenderId: "386391905238",
+  appId:             "1:386391905238:web:2d0244d0732e6513cb8a77"
+};
+
+// ================================================================
+// ▼▼▼  ADD YOUR EMAIL HERE FOR FREE ADMIN ACCESS  ▼▼▼
+// ================================================================
+const ADMIN_EMAILS = [
+  "nicholas.biberstein@gmail.com",   // ← replace with your real email
+];
+
+// ================================================================
+// ▼▼▼  STRIPE PUBLISHABLE KEY  ▼▼▼
+// From Stripe Dashboard > Developers > API Keys
+// ================================================================
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51TUU6X1AGOzrQE2fjPVKaWJfDGe5wHULJesTLsVKOi0MStlZmnnMIYTWdjP4tCDyzJUlLEbbLMUwCh1cC3fvuT7V006fvg6BCD";
+const STRIPE_PRICES = {
+  monthly:  "prod_UTR2sdWfsMPyi7",
+  semester: "prod_UTRepLZWQ03hUU",
+};
+
+// ── Init Firebase ────────────────────────────────────────────────
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ================================================================
+// APP STATE
+// ================================================================
+let currentUser     = null;
+let currentUserData = null;
+let selectedPlan    = "semester";
+let curEq           = null;
+let givenKeys       = [];
+let findKeys        = [];
+let currentTab      = "fundamentals";
+
+const tabMeta = {
+  fundamentals:{ title:"EV Fundamentals",       desc:"Mass balance, first-order decay, environmental chemistry" },
+  drinking:    { title:"Drinking Water Treatment",desc:"Sedimentation, filtration, disinfection, adsorption" },
+  wastewater:  { title:"Wastewater Treatment",   desc:"BOD, DO sag curve, activated sludge" },
+  air:         { title:"Air Pollution",           desc:"Gaussian dispersion, atmospheric stability, unit conversion" }
+};
+
+// ================================================================
+// FIREBASE: AUTH STATE LISTENER
+// Runs on every page load — the heart of the auth system
+// ================================================================
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    // Fetch user document from Firestore
+    const snap = await getDoc(doc(db, "users", user.uid));
+    currentUserData = snap.exists() ? { uid: user.uid, ...snap.data() } : null;
+    updateNav(true);
+    updateDashboard();
+    // Check if returning from successful Stripe payment
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      history.replaceState({}, "", "/");
+      showPage("dashboard");
+    }
+  } else {
+    currentUser     = null;
+    currentUserData = null;
+    updateNav(false);
+  }
+  hideLoading();
+});
+
+// ================================================================
+// HELPERS: access check
+// ================================================================
+function hasAccess() {
+  if (!currentUserData) return false;
+  if (currentUserData.role === "admin") return true;
+  if (currentUserData.subscribed === true) return true;
+  // Check trial
+  if (currentUserData.trialEnd) {
+    return new Date() < new Date(currentUserData.trialEnd);
+  }
+  return false;
+}
+
+function isAdmin() {
+  return currentUserData?.role === "admin";
+}
+
+// ================================================================
+// FIRESTORE: create/update user document
+// ================================================================
+async function ensureUserDoc(uid, data) {
+  const ref  = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+  const clean = Object.fromEntries(Object.entries(data).filter(([,v]) => v !== undefined));
+  if (!snap.exists()) {
+    await setDoc(ref, { ...clean, updatedAt: serverTimestamp() });
+  } else {
+    await updateDoc(ref, { ...clean, updatedAt: serverTimestamp() });
+  }
+}
+
+// ================================================================
+// AUTH: SIGN UP
+// ================================================================
+window.doSignup = async function() {
+  const name  = document.getElementById("signupName").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const pass  = document.getElementById("signupPassword").value;
+  const errEl = document.getElementById("signupError");
+  const btn   = document.getElementById("signupBtn");
+  errEl.classList.remove("visible");
+
+  if (!name || !email || !pass) { errEl.textContent = "Please fill in all fields."; errEl.classList.add("visible"); return; }
+  if (pass.length < 8) { errEl.textContent = "Password must be at least 8 characters."; errEl.classList.add("visible"); return; }
+
+  btn.disabled = true; btn.textContent = "Creating account...";
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+
+    const isAdm = ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+    const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 7);
+
+    await ensureUserDoc(cred.user.uid, {
+      name,
+      email,
+      role:       isAdm ? "admin" : "user",
+      subscribed: isAdm ? true : false,
+      plan:       isAdm ? "admin" : null,
+      trialEnd:   isAdm ? null : trialEnd.toISOString(),
+      createdAt:  new Date().toISOString(),
+    });
+
+    // Fetch the doc we just created
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    currentUserData = { uid: cred.user.uid, ...snap.data() };
+
+    // Admins go straight to dashboard; others see paywall
+    if (isAdm) {
+      updateDashboard();
+      showPage("dashboard");
+    } else {
+      showPage("paywall");
+    }
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e.code);
+    errEl.classList.add("visible");
+  } finally {
+    btn.disabled = false; btn.textContent = "Create Account & Start Trial";
+  }
+};
+
+// ================================================================
+// AUTH: LOG IN
+// ================================================================
+window.doLogin = async function() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass  = document.getElementById("loginPassword").value;
+  const errEl = document.getElementById("loginError");
+  const btn   = document.getElementById("loginBtn");
+  errEl.classList.remove("visible");
+
+  if (!email || !pass) { errEl.textContent = "Please fill in all fields."; errEl.classList.add("visible"); return; }
+
+  btn.disabled = true; btn.textContent = "Signing in...";
+
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+
+    // Ensure admin emails always have admin role (handles adding admins after account creation)
+    const isAdm = ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+    if (isAdm) {
+      await ensureUserDoc(cred.user.uid, { role: "admin", subscribed: true, plan: "admin" });
+    }
+
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    currentUserData = snap.exists() ? { uid: cred.user.uid, ...snap.data() } : null;
+
+    updateDashboard();
+    if (hasAccess()) {
+      showPage("dashboard");
+    } else {
+      showPage("paywall");
+    }
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e.code);
+    errEl.classList.add("visible");
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign In";
+  }
+};
+
+// ================================================================
+// AUTH: LOG OUT
+// ================================================================
+window.doLogout = async function() {
+  await signOut(auth);
+  showPage("landing");
+};
+
+// ================================================================
+// STRIPE: START CHECKOUT
+// ================================================================
+window.selectPlan = function(plan) {
+  selectedPlan = plan;
+  document.getElementById("planMonthly").classList.toggle("selected",  plan === "monthly");
+  document.getElementById("planSemester").classList.toggle("selected", plan === "semester");
+};
+
+window.startPayment = async function() {
+  const btn = document.getElementById("pwBtn");
+  btn.disabled = true; btn.textContent = "Redirecting to checkout...";
+
+  try {
+    // Load Stripe.js
+    if (!window.Stripe) {
+      await loadScript("https://js.stripe.com/v3/");
+    }
+    const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+
+    const resp = await fetch("/.netlify/functions/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        priceId: STRIPE_PRICES[selectedPlan],
+        plan:    selectedPlan,
+        uid:     currentUser.uid,
+        email:   currentUser.email,
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.message || "Checkout failed");
+    }
+
+    const { sessionId } = await resp.json();
+    await stripe.redirectToCheckout({ sessionId });
+
+  } catch (e) {
+    alert("Payment error: " + e.message + "\n\nMake sure Stripe keys are configured in firebase-config.js and Netlify environment variables.");
+    btn.disabled = false; btn.textContent = "Subscribe & Get Full Access →";
+  }
+};
+
+// ================================================================
+// DASHBOARD UI
+// ================================================================
+function updateDashboard() {
+  if (!currentUser) return;
+  const name = currentUserData?.name || currentUser.displayName || currentUser.email.split("@")[0];
+  const h = new Date().getHours();
+  const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  document.getElementById("dashGreeting").textContent = greeting + ", " + name.split(" ")[0] + ".";
+  document.getElementById("dashUserName").textContent = name;
+  document.getElementById("dashAvatar").textContent   = name.charAt(0).toUpperCase();
+  const plan = currentUserData?.plan;
+  let planLabel = "Free Trial";
+  if (plan === "admin")    planLabel = "Admin Access ✦";
+  else if (plan === "monthly")  planLabel = "Monthly Plan · Active";
+  else if (plan === "semester") planLabel = "Semester Plan · Active";
+  document.getElementById("dashUserPlan").textContent = planLabel;
+}
+
+window.openCourse = function() {
+  if (!hasAccess()) { showPage("paywall"); return; }
+  showPage("course");
+  switchTab("fundamentals", null);
+  document.querySelectorAll(".tab-item").forEach((b,i) => b.classList.toggle("active", i === 0));
+};
+
+window.filterCourses = function(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll("#allCoursesGrid .course-card").forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+};
+
+// ================================================================
+// COURSE / CALCULATOR
+// ================================================================
+window.switchTab = function(tabId, btn) {
+  currentTab = tabId; curEq = null; givenKeys = []; findKeys = [];
+  if (btn) {
+    document.querySelectorAll(".tab-item").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+  const m = tabMeta[tabId];
+  document.getElementById("tabTitle").textContent = m.title;
+  document.getElementById("tabDesc").textContent  = m.desc;
+  renderEqCards();
+  document.getElementById("selBanner").classList.remove("visible");
+  document.getElementById("gfGrid").style.display = "none";
+  document.getElementById("calcSticky").classList.remove("visible");
+  hideResult();
+};
+
+function renderEqCards() {
+  const eqs  = TABS[currentTab];
+  const grid = document.getElementById("eqGrid");
+  grid.innerHTML = "";
+  eqs.forEach(eq => {
+    const card = document.createElement("div");
+    card.className = "eq-card"; card.id = "ec_" + eq.id;
+    card.innerHTML =
+      `<div class="eq-ref">${esc(eq.ref)}</div>
+       <div class="eq-card-name">${esc(eq.name)}</div>
+       <div class="eq-formula">${esc(eq.formula)}</div>
+       <div class="eq-desc">${esc(eq.desc)}</div>
+       <div class="eq-check">✓</div>`;
+    card.onclick = () => selectEq(eq);
+    grid.appendChild(card);
+  });
+}
+
+function selectEq(eq) {
+  document.querySelectorAll(".eq-card").forEach(c => c.classList.remove("selected"));
+  document.getElementById("ec_" + eq.id).classList.add("selected");
+  curEq = eq; givenKeys = []; findKeys = [];
+  document.getElementById("sbName").textContent    = eq.name;
+  document.getElementById("sbFormula").textContent = eq.formula;
+  document.getElementById("selBanner").classList.add("visible");
+  document.getElementById("gfGrid").style.display = "grid";
+  buildChecklist("givensList", "givens");
+  buildChecklist("findsList",  "finds");
+  buildFields("givensFields", [], false);
+  buildFields("findsFields",  [], true);
+  hideResult();
+}
+
+function buildChecklist(id, mode) {
+  const eq = curEq; const el = document.getElementById(id); el.innerHTML = "";
+  const keys = mode === "finds" ? Object.keys(eq.solvers) : Object.keys(eq.vars);
+  keys.forEach(k => {
+    const v = eq.vars[k]; if (!v) return;
+    const row = document.createElement("label"); row.className = "chk-row";
+    const chk = document.createElement("input"); chk.type = "checkbox";
+    chk.onchange = e => onChk(mode, k, e.target.checked);
+    row.innerHTML = `<span class="chk-sym">${esc(v.sym)}</span><span class="chk-desc">${esc(v.desc)}</span>`;
+    row.prepend(chk);
+    el.appendChild(row);
+  });
+}
+
+function onChk(mode, key, checked) {
+  hideResult();
+  if (mode === "givens") {
+    if (checked && !givenKeys.includes(key)) givenKeys.push(key);
+    else givenKeys = givenKeys.filter(k => k !== key);
+    buildFields("givensFields", givenKeys, false);
+  } else {
+    if (checked && !findKeys.includes(key)) findKeys.push(key);
+    else findKeys = findKeys.filter(k => k !== key);
+    buildFields("findsFields", findKeys, true);
+  }
+  document.getElementById("calcSticky").classList.toggle("visible", givenKeys.length > 0 && findKeys.length > 0);
+}
+
+function buildFields(cid, keys, isFind) {
+  const eq = curEq; const el = document.getElementById(cid); el.innerHTML = "";
+  if (!keys.length) { el.innerHTML = `<div class="no-sel">${isFind ? "Select variables to find above." : "Select given variables above."}</div>`; return; }
+  keys.forEach(k => {
+    const v = eq.vars[k]; if (!v) return;
+    const row = document.createElement("div");
+    row.className = "vf-row" + (isFind ? " fr" : "");
+    const unitOpts = v.units.map((u,i) => `<option value="${i}">${esc(u)}</option>`).join("");
+    row.innerHTML =
+      `<span class="vf-sym">${esc(v.sym)}</span>
+       <span class="vf-desc">${esc(v.desc)}</span>
+       ${isFind ? "" : `<input type="number" id="gv_${k}" placeholder="value" step="any">`}
+       <select id="${isFind?"fv":"gu"}_unit_${k}">${unitOpts}</select>`;
+    el.appendChild(row);
+  });
+}
+
+window.doCalculate = function() {
+  hideResult();
+  if (!curEq || !givenKeys.length || !findKeys.length) return;
+
+  const vals = {}; const labels = [];
+  for (const k of givenKeys) {
+    const v = curEq.vars[k];
+    const raw = parseFloat(document.getElementById("gv_" + k)?.value);
+    if (isNaN(raw)) { showErr("Enter a value for " + v.sym); return; }
+    const uIdx = parseInt(document.getElementById("gu_unit_" + k)?.value || "0");
+    const tb   = v.toBase[uIdx];
+    vals[k] = typeof tb === "function" ? tb(raw) : raw * tb;
+    labels.push(v.sym + " = " + raw + " " + v.units[uIdx]);
+  }
+
+  const results = []; const errs = [];
+  for (const fk of findKeys) {
+    const solver = curEq.solvers[fk];
+    if (!solver) { errs.push("No solver for " + curEq.vars[fk].sym); continue; }
+    let res; try { res = solver(vals); } catch(e) { errs.push("Math error: " + e.message); continue; }
+    if (!res || !isFinite(res.val)) { errs.push("Undefined result for " + curEq.vars[fk].sym + " — check inputs."); continue; }
+    const fv  = curEq.vars[fk];
+    const uIdx = parseInt(document.getElementById("fv_unit_" + fk)?.value || "0");
+    const ftb  = fv.toBase[uIdx];
+    results.push({ sym: fv.sym, val: res.val / (typeof ftb === "function" ? 1 : ftb), unit: fv.units[uIdx], rearr: res.rearr, sub: res.sub });
+  }
+  if (errs.length) { showErr(errs.join(" | ")); return; }
+
+  let html = rstep("1","Equation", esc(curEq.formula) + `  <span style="color:#4a6080;font-size:.76em">[${esc(curEq.ref)}]</span>`, "");
+  results.forEach(r  => { html += rstep("2", "Rearrangement for " + esc(r.sym), esc(r.rearr), ""); });
+  html += rstep("3", "Substitution (base units)", esc(labels.join("  |  ")), "sub");
+  results.forEach(r  => { html += rstep("4", "Answer", esc(r.sym) + " = " + fmtN(r.val) + " " + esc(r.unit), "answer"); });
+
+  document.getElementById("rpBody").innerHTML = html;
+  document.getElementById("resultPanel").classList.add("visible");
+  document.getElementById("resultPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
+
+// ================================================================
+// PAGE ROUTING
+// ================================================================
+window.showPage = function(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const el = document.getElementById("page-" + name);
+  if (el) el.classList.add("active");
+  window.scrollTo(0, 0);
+  if (name === "course") {
+    document.getElementById("mobileTabSel").style.display = window.innerWidth <= 900 ? "block" : "none";
+  }
+};
+
+window.scrollTo = function(id) {
+  showPage("landing");
+  setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
+};
+
+function updateNav(loggedIn) {
+  document.getElementById("navLoginBtn").style.display  = loggedIn ? "none" : "";
+  document.getElementById("navSignupBtn").style.display = loggedIn ? "none" : "";
+  document.getElementById("navLogoutBtn").style.display = loggedIn ? "" : "none";
+  document.getElementById("navDashBtn").style.display   = loggedIn ? "" : "none";
+}
+
+function hideLoading() {
+  const ol = document.getElementById("loadingOverlay");
+  ol.classList.add("hidden");
+  setTimeout(() => ol.style.display = "none", 400);
+}
+
+// ================================================================
+// FAQ
+// ================================================================
+window.toggleFaq = function(btn) {
+  const item = btn.parentElement;
+  const was  = item.classList.contains("open");
+  document.querySelectorAll(".faq-item").forEach(i => i.classList.remove("open"));
+  if (!was) item.classList.add("open");
+};
+
+// ================================================================
+// SHARED HELPERS
+// ================================================================
+function showErr(msg) { const el = document.getElementById("errStrip"); el.textContent = "⚠ " + msg; el.classList.add("visible"); }
+function hideResult() { document.getElementById("errStrip").classList.remove("visible"); document.getElementById("resultPanel").classList.remove("visible"); }
+function rstep(n,t,c,cls) { return `<div class="rstep"><span class="rs-num">${n}</span><div class="rs-content"><div class="rs-title">${t}</div><div class="rs-body ${cls}">${c}</div></div></div>`; }
+function fmtN(n) { if(!isFinite(n))return"Error"; if(n===0)return"0"; const a=Math.abs(n); return(a>=0.001&&a<1e7)?parseFloat(n.toPrecision(5)).toString():n.toExponential(4); }
+function p(n) { return fmtN(n)+" "; }
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function loadScript(src) { return new Promise((res,rej) => { const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+function friendlyAuthError(code) {
+  const map = {
+    "auth/email-already-in-use":   "An account with this email already exists.",
+    "auth/invalid-email":          "Please enter a valid email address.",
+    "auth/weak-password":          "Password is too weak. Use at least 8 characters.",
+    "auth/user-not-found":         "No account found with this email.",
+    "auth/wrong-password":         "Incorrect password. Please try again.",
+    "auth/invalid-credential":     "Incorrect email or password.",
+    "auth/too-many-requests":      "Too many attempts. Please try again later.",
+    "auth/network-request-failed": "Network error. Check your connection.",
+  };
+  return map[code] || "Something went wrong. Please try again.";
+}
+
+// ================================================================
+// EQUATION DATABASE
+// ================================================================
+const TABS = {
+fundamentals:[
+  {id:"hrt",name:"Hydraulic Retention Time",formula:"tau = V / Q",desc:"Time fluid spends in a reactor. Core sizing parameter. (EQN 2-27)",ref:"EQN 2-27",vars:{"tau":{sym:"tau",desc:"HRT",units:["d","h","s"],toBase:[1,1/24,1/86400]},"V":{sym:"V",desc:"Volume",units:["m3","L","gal","ft3"],toBase:[1,0.001,0.003785,0.028317]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/s","m3/d","L/s","MGD"],toBase:[1,1/86400,0.001,0.04381]}},solvers:{"tau":v=>({val:v.V/v.Q/86400,rearr:"tau [d] = V / (Q × 86400)",sub:"V="+p(v.V)+"m3, Q="+p(v.Q)+"m3/s"}),"V":v=>({val:v.tau*86400*v.Q,rearr:"V = tau × Q × 86400",sub:"tau="+p(v.tau)+"d, Q="+p(v.Q)+"m3/s"}),"Q":v=>({val:v.V/(v.tau*86400),rearr:"Q = V / (tau × 86400)",sub:"V="+p(v.V)+"m3, tau="+p(v.tau)+"d"})}},
+  {id:"decay",name:"First-Order Decay — C(t)",formula:"C_t = C_o × exp(-k×t)",desc:"Concentration at time t. (EQN 2-14)",ref:"EQN 2-14",vars:{"C0":{sym:"C_o",desc:"Initial conc.",units:["mg/L","ug/L","g/m3"],toBase:[1,0.001,1]},"k":{sym:"k",desc:"Rate constant",units:["1/d","1/h"],toBase:[1,24]},"t":{sym:"t",desc:"Time",units:["d","h","s"],toBase:[1,1/24,1/86400]},"Ct":{sym:"C_t",desc:"Conc. at time t",units:["mg/L","ug/L","g/m3"],toBase:[1,0.001,1]}},solvers:{"Ct":v=>({val:v.C0*Math.exp(-v.k*v.t),rearr:"C_t = C_o × e^(-k×t)",sub:"C_o="+p(v.C0)+", k="+p(v.k)+", t="+p(v.t)}),"C0":v=>({val:v.Ct/Math.exp(-v.k*v.t),rearr:"C_o = C_t / e^(-k×t)",sub:"C_t="+p(v.Ct)+", k="+p(v.k)+", t="+p(v.t)}),"k":v=>({val:-Math.log(v.Ct/v.C0)/v.t,rearr:"k = -ln(C_t/C_o) / t",sub:"C_t="+p(v.Ct)+", C_o="+p(v.C0)+", t="+p(v.t)}),"t":v=>({val:-Math.log(v.Ct/v.C0)/v.k,rearr:"t = -ln(C_t/C_o) / k",sub:"C_t="+p(v.Ct)+", C_o="+p(v.C0)+", k="+p(v.k)})}},
+  {id:"cstr_ss",name:"Steady-State CSTR",formula:"Q_in × C_in = Q_out × C_out",desc:"Mass balance, no reaction, completely mixed. (EQN 2-3)",ref:"EQN 2-3",vars:{"Qin":{sym:"Q_in",desc:"Influent flow",units:["m3/s","L/s","m3/d","MGD"],toBase:[1,0.001,1/86400,0.04381]},"Cin":{sym:"C_in",desc:"Influent conc.",units:["mg/L","ug/L","g/m3"],toBase:[1,0.001,1]},"Qout":{sym:"Q_out",desc:"Effluent flow",units:["m3/s","L/s","m3/d","MGD"],toBase:[1,0.001,1/86400,0.04381]},"Cout":{sym:"C_out",desc:"Effluent conc.",units:["mg/L","ug/L","g/m3"],toBase:[1,0.001,1]}},solvers:{"Cout":v=>({val:v.Qin*v.Cin/v.Qout,rearr:"C_out = (Q_in × C_in) / Q_out",sub:"Q_in="+p(v.Qin)+", C_in="+p(v.Cin)+", Q_out="+p(v.Qout)}),"Cin":v=>({val:v.Qout*v.Cout/v.Qin,rearr:"C_in = (Q_out × C_out) / Q_in",sub:"Q_out="+p(v.Qout)+", C_out="+p(v.Cout)+", Q_in="+p(v.Qin)}),"Qin":v=>({val:v.Qout*v.Cout/v.Cin,rearr:"Q_in = (Q_out × C_out) / C_in",sub:"Q_out="+p(v.Qout)+", C_out="+p(v.Cout)+", C_in="+p(v.Cin)}),"Qout":v=>({val:v.Qin*v.Cin/v.Cout,rearr:"Q_out = (Q_in × C_in) / C_out",sub:"Q_in="+p(v.Qin)+", C_in="+p(v.Cin)+", C_out="+p(v.Cout)})}},
+  {id:"mixing",name:"Two-Stream Mixing",formula:"Q1×C1 + Q2×C2 = Q_mix × C_mix",desc:"Steady-state mixing of two streams. (EQN 2-3)",ref:"EQN 2-3",vars:{"Q1":{sym:"Q1",desc:"Flow stream 1",units:["m3/s","L/s","m3/d"],toBase:[1,0.001,1/86400]},"C1":{sym:"C1",desc:"Conc. stream 1",units:["mg/L","ug/L"],toBase:[1,0.001]},"Q2":{sym:"Q2",desc:"Flow stream 2",units:["m3/s","L/s","m3/d"],toBase:[1,0.001,1/86400]},"C2":{sym:"C2",desc:"Conc. stream 2",units:["mg/L","ug/L"],toBase:[1,0.001]},"Qm":{sym:"Q_mix",desc:"Mixed flow",units:["m3/s","L/s","m3/d"],toBase:[1,0.001,1/86400]},"Cm":{sym:"C_mix",desc:"Mixed conc.",units:["mg/L","ug/L"],toBase:[1,0.001]}},solvers:{"Cm":v=>({val:(v.Q1*v.C1+v.Q2*v.C2)/v.Qm,rearr:"C_mix = (Q1×C1 + Q2×C2) / Q_mix",sub:"Q1="+p(v.Q1)+", C1="+p(v.C1)+", Q2="+p(v.Q2)+", C2="+p(v.C2)}),"Qm":v=>({val:(v.Q1*v.C1+v.Q2*v.C2)/v.Cm,rearr:"Q_mix = (Q1×C1 + Q2×C2) / C_mix",sub:"Q1="+p(v.Q1)+", C1="+p(v.C1)+", Q2="+p(v.Q2)+", C2="+p(v.C2)}),"C1":v=>({val:(v.Qm*v.Cm-v.Q2*v.C2)/v.Q1,rearr:"C1 = (Q_mix×C_mix - Q2×C2) / Q1",sub:"Q_mix="+p(v.Qm)+", C_mix="+p(v.Cm)+", Q2="+p(v.Q2)+", C2="+p(v.C2)}),"C2":v=>({val:(v.Qm*v.Cm-v.Q1*v.C1)/v.Q2,rearr:"C2 = (Q_mix×C_mix - Q1×C1) / Q2",sub:"Q_mix="+p(v.Qm)+", C_mix="+p(v.Cm)+", Q1="+p(v.Q1)+", C1="+p(v.C1)})}},
+  {id:"ph_h",name:"pH and [H+]",formula:"pH = -log10([H+])",desc:"pH and hydrogen ion concentration. (EQN 5-31)",ref:"EQN 5-31",vars:{"pH":{sym:"pH",desc:"pH",units:["dimensionless"],toBase:[1]},"Hp":{sym:"[H+]",desc:"H+ conc.",units:["mol/L"],toBase:[1]}},solvers:{"pH":v=>({val:-Math.log10(v.Hp),rearr:"pH = -log10([H+])",sub:"[H+]="+p(v.Hp)}),"Hp":v=>({val:Math.pow(10,-v.pH),rearr:"[H+] = 10^(-pH)",sub:"pH="+p(v.pH)})}},
+  {id:"oh_ph",name:"[OH-] from pH",formula:"[OH-] = 10^(-(14-pH))",desc:"Hydroxide concentration from pH. (EQN 5-30)",ref:"EQN 5-30",vars:{"pH":{sym:"pH",desc:"pH",units:["dimensionless"],toBase:[1]},"OHm":{sym:"[OH-]",desc:"OH- conc.",units:["mol/L"],toBase:[1]}},solvers:{"OHm":v=>({val:Math.pow(10,-(14-v.pH)),rearr:"[OH-] = 10^(-(14-pH))",sub:"pH="+p(v.pH)}),"pH":v=>({val:14+Math.log10(v.OHm),rearr:"pH = 14 + log10([OH-])",sub:"[OH-]="+p(v.OHm)})}},
+  {id:"pks",name:"pKs from Ks",formula:"pKs = -log10(Ks)",desc:"Solubility product in log form. (EQN 5-24)",ref:"EQN 5-24",vars:{"Ks":{sym:"Ks",desc:"Solubility product",units:["dimensionless"],toBase:[1]},"pKs":{sym:"pKs",desc:"pKs",units:["dimensionless"],toBase:[1]}},solvers:{"pKs":v=>({val:-Math.log10(v.Ks),rearr:"pKs = -log10(Ks)",sub:"Ks="+p(v.Ks)}),"Ks":v=>({val:Math.pow(10,-v.pKs),rearr:"Ks = 10^(-pKs)",sub:"pKs="+p(v.pKs)})}},
+  {id:"chem_feed",name:"Chemical Feed Rate",formula:"Qc × C = Q × D",desc:"Required chemical feed flow for a desired dose. (EQN 5-56)",ref:"EQN 5-56",vars:{"Qc":{sym:"Qc",desc:"Chemical feed flow",units:["m3/s","L/s","m3/d"],toBase:[1,0.001,1/86400]},"Cc":{sym:"C",desc:"Stock concentration",units:["mg/L","g/L","kg/m3"],toBase:[1,1000,1000]},"Q":{sym:"Q",desc:"Treatment flow",units:["m3/s","L/s","m3/d"],toBase:[1,0.001,1/86400]},"D":{sym:"D",desc:"Desired dose",units:["mg/L","g/L","kg/m3"],toBase:[1,1000,1000]}},solvers:{"Qc":v=>({val:v.Q*v.D/v.Cc,rearr:"Qc = (Q × D) / C",sub:"Q="+p(v.Q)+", D="+p(v.D)+", C="+p(v.Cc)}),"Cc":v=>({val:v.Q*v.D/v.Qc,rearr:"C = (Q × D) / Qc",sub:"Q="+p(v.Q)+", D="+p(v.D)+", Qc="+p(v.Qc)}),"Q":v=>({val:v.Qc*v.Cc/v.D,rearr:"Q = (Qc × C) / D",sub:"Qc="+p(v.Qc)+", C="+p(v.Cc)+", D="+p(v.D)}),"D":v=>({val:v.Qc*v.Cc/v.Q,rearr:"D = (Qc × C) / Q",sub:"Qc="+p(v.Qc)+", C="+p(v.Cc)+", Q="+p(v.Q)})}},
+],
+drinking:[
+  {id:"overflow",name:"Overflow / Surface Loading Rate",formula:"v_o = Q / A_s",desc:"Surface loading rate for sedimentation. (EQN 6-28)",ref:"EQN 6-28",vars:{"vo":{sym:"v_o",desc:"Overflow rate",units:["m/s","m/d","m/h"],toBase:[1,1/86400,1/3600]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/s","m3/d","L/s"],toBase:[1,1/86400,0.001]},"As":{sym:"A_s",desc:"Surface area",units:["m2","ft2"],toBase:[1,0.0929]}},solvers:{"vo":v=>({val:v.Q/v.As,rearr:"v_o = Q / A_s",sub:"Q="+p(v.Q)+", A_s="+p(v.As)}),"Q":v=>({val:v.vo*v.As,rearr:"Q = v_o × A_s",sub:"v_o="+p(v.vo)+", A_s="+p(v.As)}),"As":v=>({val:v.Q/v.vo,rearr:"A_s = Q / v_o",sub:"Q="+p(v.Q)+", v_o="+p(v.vo)})}},
+  {id:"removal",name:"Percent Particle Removal",formula:"P = 100 × (v_s / v_o)",desc:"Fraction of particles removed. (EQN 6-33)",ref:"EQN 6-33",vars:{"P":{sym:"P",desc:"Percent removal",units:["%"],toBase:[1]},"vs":{sym:"v_s",desc:"Settling velocity",units:["m/s","m/d","m/h"],toBase:[1,1/86400,1/3600]},"vo":{sym:"v_o",desc:"Overflow rate",units:["m/s","m/d","m/h"],toBase:[1,1/86400,1/3600]}},solvers:{"P":v=>({val:100*v.vs/v.vo,rearr:"P = 100 × (v_s / v_o)",sub:"v_s="+p(v.vs)+", v_o="+p(v.vo)}),"vs":v=>({val:v.P*v.vo/100,rearr:"v_s = P × v_o / 100",sub:"P="+p(v.P)+", v_o="+p(v.vo)}),"vo":v=>({val:100*v.vs/v.P,rearr:"v_o = 100 × v_s / P",sub:"v_s="+p(v.vs)+", P="+p(v.P)})}},
+  {id:"wor",name:"Weir Overflow Rate",formula:"WOR = Q / WL",desc:"Flow per unit weir length. (p.322)",ref:"p.322",vars:{"WOR":{sym:"WOR",desc:"Weir overflow rate",units:["m2/s","m3/(m*d)"],toBase:[1,1/86400]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/s","m3/d","L/s"],toBase:[1,1/86400,0.001]},"WL":{sym:"WL",desc:"Weir length",units:["m","ft"],toBase:[1,0.3048]}},solvers:{"WOR":v=>({val:v.Q/v.WL,rearr:"WOR = Q / WL",sub:"Q="+p(v.Q)+", WL="+p(v.WL)}),"Q":v=>({val:v.WOR*v.WL,rearr:"Q = WOR × WL",sub:"WOR="+p(v.WOR)+", WL="+p(v.WL)}),"WL":v=>({val:v.Q/v.WOR,rearr:"WL = Q / WOR",sub:"Q="+p(v.Q)+", WOR="+p(v.WOR)})}},
+  {id:"filter_va",name:"Filter Hydraulic Loading Rate",formula:"v_a = Q / A_s",desc:"Filter loading rate. (EQN 6-47)",ref:"EQN 6-47",vars:{"va":{sym:"v_a",desc:"Filter loading rate",units:["m/s","m/h","m/d"],toBase:[1,1/3600,1/86400]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/s","m3/d","L/s"],toBase:[1,1/86400,0.001]},"As":{sym:"A_s",desc:"Filter area",units:["m2","ft2"],toBase:[1,0.0929]}},solvers:{"va":v=>({val:v.Q/v.As,rearr:"v_a = Q / A_s",sub:"Q="+p(v.Q)+", A_s="+p(v.As)}),"Q":v=>({val:v.va*v.As,rearr:"Q = v_a × A_s",sub:"v_a="+p(v.va)+", A_s="+p(v.As)}),"As":v=>({val:v.Q/v.va,rearr:"A_s = Q / v_a",sub:"Q="+p(v.Q)+", v_a="+p(v.va)})}},
+  {id:"disinfect",name:"Chick-Watson Disinfection",formula:"log(N_o/N_t) = k' × C × t",desc:"CT model for pathogen inactivation. (EQN 6-65/6-66)",ref:"EQN 6-65/6-66",vars:{"No":{sym:"N_o",desc:"Initial count",units:["count/mL","MPN/100mL"],toBase:[1,0.01]},"Nt":{sym:"N_t",desc:"Count at time t",units:["count/mL","MPN/100mL"],toBase:[1,0.01]},"kp":{sym:"k'",desc:"Rate constant",units:["L/(mg*min)"],toBase:[1]},"C":{sym:"C",desc:"Disinfectant conc.",units:["mg/L"],toBase:[1]},"t":{sym:"t",desc:"Contact time",units:["min","s","h"],toBase:[1,1/60,60]}},solvers:{"Nt":v=>({val:v.No/Math.pow(10,v.kp*v.C*v.t),rearr:"N_t = N_o / 10^(k'×C×t)",sub:"N_o="+p(v.No)+", k'="+p(v.kp)+", C="+p(v.C)+", t="+p(v.t)}),"No":v=>({val:v.Nt*Math.pow(10,v.kp*v.C*v.t),rearr:"N_o = N_t × 10^(k'×C×t)",sub:"N_t="+p(v.Nt)+", k'="+p(v.kp)+", C="+p(v.C)+", t="+p(v.t)}),"kp":v=>({val:Math.log10(v.No/v.Nt)/(v.C*v.t),rearr:"k' = log10(N_o/N_t) / (C×t)",sub:"N_o="+p(v.No)+", N_t="+p(v.Nt)+", C="+p(v.C)+", t="+p(v.t)}),"C":v=>({val:Math.log10(v.No/v.Nt)/(v.kp*v.t),rearr:"C = log10(N_o/N_t) / (k'×t)",sub:"N_o="+p(v.No)+", N_t="+p(v.Nt)+", k'="+p(v.kp)+", t="+p(v.t)}),"t":v=>({val:Math.log10(v.No/v.Nt)/(v.kp*v.C),rearr:"t = log10(N_o/N_t) / (k'×C)",sub:"N_o="+p(v.No)+", N_t="+p(v.Nt)+", k'="+p(v.kp)+", C="+p(v.C)})}},
+  {id:"freundlich",name:"Freundlich Isotherm",formula:"q_e = K_F × C_e^n",desc:"Adsorption equilibrium for GAC. (Class EQN)",ref:"Class EQN",vars:{"qe":{sym:"q_e",desc:"Mass adsorbed/adsorbent",units:["mg/g","ug/g"],toBase:[1,0.001]},"KF":{sym:"K_F",desc:"Capacity constant",units:["(mg/g)(L/mg)^n"],toBase:[1]},"Ce":{sym:"C_e",desc:"Equilibrium conc.",units:["mg/L","ug/L"],toBase:[1,0.001]},"n":{sym:"n",desc:"Intensity constant",units:["dimensionless"],toBase:[1]}},solvers:{"qe":v=>({val:v.KF*Math.pow(v.Ce,v.n),rearr:"q_e = K_F × C_e^n",sub:"K_F="+p(v.KF)+", C_e="+p(v.Ce)+", n="+p(v.n)}),"Ce":v=>({val:Math.pow(v.qe/v.KF,1/v.n),rearr:"C_e = (q_e / K_F)^(1/n)",sub:"q_e="+p(v.qe)+", K_F="+p(v.KF)+", n="+p(v.n)}),"KF":v=>({val:v.qe/Math.pow(v.Ce,v.n),rearr:"K_F = q_e / C_e^n",sub:"q_e="+p(v.qe)+", C_e="+p(v.Ce)+", n="+p(v.n)})}},
+  {id:"freundlich_batch",name:"Batch Adsorption Mass Balance",formula:"q_e = (C_o - C_e) × V / m",desc:"Specific uptake from batch isotherm test.",ref:"Class EQN",vars:{"qe":{sym:"q_e",desc:"Specific uptake",units:["mg/g"],toBase:[1]},"Co":{sym:"C_o",desc:"Initial conc.",units:["mg/L"],toBase:[1]},"Ce":{sym:"C_e",desc:"Equilibrium conc.",units:["mg/L"],toBase:[1]},"V":{sym:"V",desc:"Solution volume",units:["L","m3"],toBase:[1,1000]},"m":{sym:"m",desc:"Mass of adsorbent",units:["g","kg"],toBase:[1,1000]}},solvers:{"qe":v=>({val:(v.Co-v.Ce)*v.V/v.m,rearr:"q_e = (C_o - C_e) × V / m",sub:"C_o="+p(v.Co)+", C_e="+p(v.Ce)+", V="+p(v.V)+", m="+p(v.m)}),"Ce":v=>({val:v.Co-v.qe*v.m/v.V,rearr:"C_e = C_o - (q_e × m) / V",sub:"C_o="+p(v.Co)+", q_e="+p(v.qe)+", m="+p(v.m)+", V="+p(v.V)}),"Co":v=>({val:v.Ce+v.qe*v.m/v.V,rearr:"C_o = C_e + (q_e × m) / V",sub:"C_e="+p(v.Ce)+", q_e="+p(v.qe)+", m="+p(v.m)+", V="+p(v.V)}),"m":v=>({val:(v.Co-v.Ce)*v.V/v.qe,rearr:"m = (C_o - C_e) × V / q_e",sub:"C_o="+p(v.Co)+", C_e="+p(v.Ce)+", V="+p(v.V)+", q_e="+p(v.qe)}),"V":v=>({val:v.qe*v.m/(v.Co-v.Ce),rearr:"V = q_e × m / (C_o - C_e)",sub:"q_e="+p(v.qe)+", m="+p(v.m)+", C_o="+p(v.Co)+", C_e="+p(v.Ce)})}},
+],
+wastewater:[
+  {id:"bod_exerted",name:"BOD Exerted at Time t",formula:"BOD_t = L_o × (1 - exp(-k×t))",desc:"Cumulative O2 demand exerted. (EQN 7-4)",ref:"EQN 7-4",vars:{"BODt":{sym:"BOD_t",desc:"BOD exerted",units:["mg/L"],toBase:[1]},"Lo":{sym:"L_o",desc:"Ultimate BOD",units:["mg/L"],toBase:[1]},"k":{sym:"k",desc:"BOD rate constant",units:["1/d","1/h"],toBase:[1,24]},"t":{sym:"t",desc:"Time",units:["d","h"],toBase:[1,1/24]}},solvers:{"BODt":v=>({val:v.Lo*(1-Math.exp(-v.k*v.t)),rearr:"BOD_t = L_o × (1 - e^(-k×t))",sub:"L_o="+p(v.Lo)+", k="+p(v.k)+", t="+p(v.t)}),"Lo":v=>({val:v.BODt/(1-Math.exp(-v.k*v.t)),rearr:"L_o = BOD_t / (1 - e^(-k×t))",sub:"BOD_t="+p(v.BODt)+", k="+p(v.k)+", t="+p(v.t)}),"t":v=>({val:-Math.log(1-v.BODt/v.Lo)/v.k,rearr:"t = -ln(1 - BOD_t/L_o) / k",sub:"BOD_t="+p(v.BODt)+", L_o="+p(v.Lo)+", k="+p(v.k)})}},
+  {id:"bod_remain",name:"BOD Remaining at Time t",formula:"L_t = L_o × exp(-k_d×t)",desc:"Remaining O2 demand at time t. (EQN 7-3)",ref:"EQN 7-3",vars:{"Lt":{sym:"L_t",desc:"BOD remaining",units:["mg/L"],toBase:[1]},"Lo":{sym:"L_o",desc:"Ultimate BOD",units:["mg/L"],toBase:[1]},"kd":{sym:"k_d",desc:"Deoxygenation rate",units:["1/d","1/h"],toBase:[1,24]},"t":{sym:"t",desc:"Time",units:["d","h"],toBase:[1,1/24]}},solvers:{"Lt":v=>({val:v.Lo*Math.exp(-v.kd*v.t),rearr:"L_t = L_o × e^(-k_d×t)",sub:"L_o="+p(v.Lo)+", k_d="+p(v.kd)+", t="+p(v.t)}),"Lo":v=>({val:v.Lt/Math.exp(-v.kd*v.t),rearr:"L_o = L_t / e^(-k_d×t)",sub:"L_t="+p(v.Lt)+", k_d="+p(v.kd)+", t="+p(v.t)}),"kd":v=>({val:-Math.log(v.Lt/v.Lo)/v.t,rearr:"k_d = -ln(L_t/L_o) / t",sub:"L_t="+p(v.Lt)+", L_o="+p(v.Lo)+", t="+p(v.t)}),"t":v=>({val:-Math.log(v.Lt/v.Lo)/v.kd,rearr:"t = -ln(L_t/L_o) / k_d",sub:"L_t="+p(v.Lt)+", L_o="+p(v.Lo)+", k_d="+p(v.kd)})}},
+  {id:"tcorr",name:"Temperature Correction for k",formula:"k_T = k20 × theta^(T-20)",desc:"Rate constant adjusted for temperature. (EQN 7-6)",ref:"EQN 7-6",vars:{"kT":{sym:"k_T",desc:"Rate at T",units:["1/d"],toBase:[1]},"k20":{sym:"k20",desc:"Rate at 20C",units:["1/d"],toBase:[1]},"theta":{sym:"theta",desc:"Correction factor",units:["dimensionless"],toBase:[1]},"T":{sym:"T",desc:"Temperature",units:["C"],toBase:[1]}},solvers:{"kT":v=>({val:v.k20*Math.pow(v.theta,v.T-20),rearr:"k_T = k20 × theta^(T-20)",sub:"k20="+p(v.k20)+", theta="+p(v.theta)+", T="+p(v.T)}),"k20":v=>({val:v.kT/Math.pow(v.theta,v.T-20),rearr:"k20 = k_T / theta^(T-20)",sub:"k_T="+p(v.kT)+", theta="+p(v.theta)+", T="+p(v.T)}),"T":v=>({val:20+Math.log(v.kT/v.k20)/Math.log(v.theta),rearr:"T = 20 + ln(k_T/k20) / ln(theta)",sub:"k_T="+p(v.kT)+", k20="+p(v.k20)+", theta="+p(v.theta)})}},
+  {id:"do_deficit",name:"DO Deficit",formula:"D = D_s - DO",desc:"Dissolved oxygen deficit. (EQN 7-21)",ref:"EQN 7-21",vars:{"D":{sym:"D",desc:"DO deficit",units:["mg/L"],toBase:[1]},"Ds":{sym:"D_s",desc:"Saturation DO",units:["mg/L"],toBase:[1]},"DO":{sym:"DO",desc:"Actual DO",units:["mg/L"],toBase:[1]}},solvers:{"D":v=>({val:v.Ds-v.DO,rearr:"D = D_s - DO",sub:"D_s="+p(v.Ds)+", DO="+p(v.DO)}),"DO":v=>({val:v.Ds-v.D,rearr:"DO = D_s - D",sub:"D_s="+p(v.Ds)+", D="+p(v.D)}),"Ds":v=>({val:v.D+v.DO,rearr:"D_s = D + DO",sub:"D="+p(v.D)+", DO="+p(v.DO)})}},
+  {id:"do_sag",name:"DO Sag Curve — Deficit at Time t",formula:"D_t = (k_d×L_o/(k_r-k_d))×(e^(-k_d×t)-e^(-k_r×t)) + D_o×e^(-k_r×t)",desc:"Streeter-Phelps DO sag equation. (EQN 7-36)",ref:"EQN 7-36",vars:{"Dt":{sym:"D_t",desc:"DO deficit at t",units:["mg/L"],toBase:[1]},"kd":{sym:"k_d",desc:"Deoxygenation rate",units:["1/d"],toBase:[1]},"Lo":{sym:"L_o",desc:"Ultimate BOD at mix",units:["mg/L"],toBase:[1]},"kr":{sym:"k_r",desc:"Reaeration rate",units:["1/d"],toBase:[1]},"t":{sym:"t",desc:"Travel time",units:["d","h"],toBase:[1,1/24]},"Do":{sym:"D_o",desc:"Initial DO deficit",units:["mg/L"],toBase:[1]}},solvers:{"Dt":v=>{const val=(v.kd*v.Lo/(v.kr-v.kd))*(Math.exp(-v.kd*v.t)-Math.exp(-v.kr*v.t))+v.Do*Math.exp(-v.kr*v.t);return{val,rearr:"D_t = (k_d×L_o/(k_r-k_d))×(e^(-k_d×t)-e^(-k_r×t)) + D_o×e^(-k_r×t)",sub:"k_d="+p(v.kd)+", L_o="+p(v.Lo)+", k_r="+p(v.kr)+", t="+p(v.t)+", D_o="+p(v.Do)}}}},
+  {id:"do_sag_tc",name:"DO Sag — Critical Time",formula:"t_c = [1/(k_r-k_d)] × ln[(k_r/k_d)×(1 - D_o×(k_r-k_d)/(k_d×L_o))]",desc:"Time of minimum DO in the sag curve. (EQN 7-31)",ref:"EQN 7-31",vars:{"tc":{sym:"t_c",desc:"Critical time",units:["d"],toBase:[1]},"kd":{sym:"k_d",desc:"Deoxygenation rate",units:["1/d"],toBase:[1]},"kr":{sym:"k_r",desc:"Reaeration rate",units:["1/d"],toBase:[1]},"Do":{sym:"D_o",desc:"Initial DO deficit",units:["mg/L"],toBase:[1]},"Lo":{sym:"L_o",desc:"Ultimate BOD at mix",units:["mg/L"],toBase:[1]}},solvers:{"tc":v=>{const val=(1/(v.kr-v.kd))*Math.log((v.kr/v.kd)*(1-v.Do*(v.kr-v.kd)/(v.kd*v.Lo)));return{val,rearr:"t_c = [1/(k_r-k_d)] × ln[(k_r/k_d)×(1 - D_o×(k_r-k_d)/(k_d×L_o))]",sub:"k_d="+p(v.kd)+", k_r="+p(v.kr)+", D_o="+p(v.Do)+", L_o="+p(v.Lo)}}}},
+  {id:"biomass_X",name:"Biomass Concentration (X)",formula:"X = theta_c×Y×(S_o-S) / (1 + k_d×theta_c)",desc:"MLVSS in activated sludge at steady state. (EQN 9-7)",ref:"EQN 9-7",vars:{"X":{sym:"X",desc:"Biomass MLVSS",units:["mg/L","g/m3"],toBase:[1,1]},"thetac":{sym:"theta_c",desc:"SRT",units:["d"],toBase:[1]},"Y":{sym:"Y",desc:"True yield",units:["mg VSS/mg BOD"],toBase:[1]},"So":{sym:"S_o",desc:"Influent BOD",units:["mg/L","g/m3"],toBase:[1,1]},"S":{sym:"S",desc:"Effluent BOD",units:["mg/L","g/m3"],toBase:[1,1]},"kd":{sym:"k_d",desc:"Decay rate",units:["1/d"],toBase:[1]}},solvers:{"X":v=>({val:v.thetac*v.Y*(v.So-v.S)/(1+v.kd*v.thetac),rearr:"X = theta_c×Y×(S_o-S) / (1 + k_d×theta_c)",sub:"theta_c="+p(v.thetac)+", Y="+p(v.Y)+", S_o="+p(v.So)+", S="+p(v.S)+", k_d="+p(v.kd)}),"S":v=>({val:v.So-v.X*(1+v.kd*v.thetac)/(v.thetac*v.Y),rearr:"S = S_o - X×(1+k_d×theta_c)/(theta_c×Y)",sub:"X="+p(v.X)+", theta_c="+p(v.thetac)+", Y="+p(v.Y)+", S_o="+p(v.So)+", k_d="+p(v.kd)})}},
+  {id:"Yobs",name:"Observed Yield",formula:"Y_obs = Y / (1 + k_d×theta_c)",desc:"Net cell yield after endogenous respiration. (EQN 9-26)",ref:"EQN 9-26",vars:{"Yobs":{sym:"Y_obs",desc:"Observed yield",units:["dimensionless"],toBase:[1]},"Y":{sym:"Y",desc:"True yield",units:["dimensionless"],toBase:[1]},"kd":{sym:"k_d",desc:"Decay rate",units:["1/d"],toBase:[1]},"thetac":{sym:"theta_c",desc:"SRT",units:["d"],toBase:[1]}},solvers:{"Yobs":v=>({val:v.Y/(1+v.kd*v.thetac),rearr:"Y_obs = Y / (1 + k_d×theta_c)",sub:"Y="+p(v.Y)+", k_d="+p(v.kd)+", theta_c="+p(v.thetac)}),"Y":v=>({val:v.Yobs*(1+v.kd*v.thetac),rearr:"Y = Y_obs × (1 + k_d×theta_c)",sub:"Y_obs="+p(v.Yobs)+", k_d="+p(v.kd)+", theta_c="+p(v.thetac)}),"thetac":v=>({val:(v.Y/v.Yobs-1)/v.kd,rearr:"theta_c = (Y/Y_obs - 1) / k_d",sub:"Y="+p(v.Y)+", Y_obs="+p(v.Yobs)+", k_d="+p(v.kd)})}},
+  {id:"srt",name:"Solids Retention Time (SRT)",formula:"theta_c = V×X / (Q_w×X_w)",desc:"Mean cell residence time. (EQN 9-27)",ref:"EQN 9-27",vars:{"thetac":{sym:"theta_c",desc:"SRT",units:["d"],toBase:[1]},"V":{sym:"V",desc:"Reactor volume",units:["m3"],toBase:[1]},"X":{sym:"X",desc:"Reactor MLVSS",units:["mg/L","g/m3"],toBase:[1,1]},"Qw":{sym:"Q_w",desc:"Waste sludge flow",units:["m3/d"],toBase:[1]},"Xw":{sym:"X_w",desc:"Waste sludge VSS",units:["mg/L","g/m3"],toBase:[1,1]}},solvers:{"thetac":v=>({val:v.V*v.X/(v.Qw*v.Xw),rearr:"theta_c = V×X / (Q_w×X_w)",sub:"V="+p(v.V)+", X="+p(v.X)+", Q_w="+p(v.Qw)+", X_w="+p(v.Xw)}),"Qw":v=>({val:v.V*v.X/(v.thetac*v.Xw),rearr:"Q_w = V×X / (theta_c×X_w)",sub:"V="+p(v.V)+", X="+p(v.X)+", theta_c="+p(v.thetac)+", X_w="+p(v.Xw)})}},
+  {id:"fm_ratio",name:"F/M Ratio",formula:"F/M = Q×S_o / (V×X)",desc:"Food-to-microorganism ratio. (EQN 9-28)",ref:"EQN 9-28",vars:{"FM":{sym:"F/M",desc:"F/M ratio",units:["kg BOD/(kg VSS*d)"],toBase:[1]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/d"],toBase:[1]},"So":{sym:"S_o",desc:"Influent BOD",units:["g/m3","mg/L"],toBase:[1,1]},"V":{sym:"V",desc:"Reactor volume",units:["m3"],toBase:[1]},"X":{sym:"X",desc:"MLVSS",units:["g/m3","mg/L"],toBase:[1,1]}},solvers:{"FM":v=>({val:v.Q*v.So/(v.V*v.X),rearr:"F/M = Q×S_o / (V×X)",sub:"Q="+p(v.Q)+", S_o="+p(v.So)+", V="+p(v.V)+", X="+p(v.X)}),"V":v=>({val:v.Q*v.So/(v.FM*v.X),rearr:"V = Q×S_o / (F/M × X)",sub:"Q="+p(v.Q)+", S_o="+p(v.So)+", F/M="+p(v.FM)+", X="+p(v.X)}),"Q":v=>({val:v.FM*v.V*v.X/v.So,rearr:"Q = F/M × V × X / S_o",sub:"F/M="+p(v.FM)+", V="+p(v.V)+", X="+p(v.X)+", S_o="+p(v.So)})}},
+  {id:"sludge_Px",name:"Net Sludge Production",formula:"P_x = Y_obs × Q × (S_o - S)",desc:"Daily waste sludge mass. (EQN 9-25)",ref:"EQN 9-25",vars:{"Px":{sym:"P_x",desc:"Sludge production",units:["kg/d","g/d"],toBase:[1,0.001]},"Yobs":{sym:"Y_obs",desc:"Observed yield",units:["kg VSS/kg BOD"],toBase:[1]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/d"],toBase:[1]},"So":{sym:"S_o",desc:"Influent substrate",units:["g/m3","mg/L"],toBase:[1,1]},"S":{sym:"S",desc:"Effluent substrate",units:["g/m3","mg/L"],toBase:[1,1]}},solvers:{"Px":v=>({val:v.Yobs*v.Q*(v.So-v.S)/1000,rearr:"P_x [kg/d] = Y_obs × Q × (S_o-S) / 1000",sub:"Y_obs="+p(v.Yobs)+", Q="+p(v.Q)+", S_o="+p(v.So)+", S="+p(v.S)}),"Yobs":v=>({val:v.Px*1000/(v.Q*(v.So-v.S)),rearr:"Y_obs = P_x×1000 / [Q×(S_o-S)]",sub:"P_x="+p(v.Px)+", Q="+p(v.Q)+", S_o="+p(v.So)+", S="+p(v.S)})}},
+  {id:"o2_req",name:"O2 Requirement — Activated Sludge",formula:"O2 = Q×(S_o-S)/f - 1.42×P_x",desc:"Daily O2 demand for biological treatment. (EQN 9-29)",ref:"EQN 9-29",vars:{"O2req":{sym:"O2",desc:"O2 required",units:["kg/d"],toBase:[1]},"Q":{sym:"Q",desc:"Flow rate",units:["m3/d"],toBase:[1]},"So":{sym:"S_o",desc:"Influent substrate",units:["g/m3","mg/L"],toBase:[1,1]},"S":{sym:"S",desc:"Effluent substrate",units:["g/m3","mg/L"],toBase:[1,1]},"f":{sym:"f",desc:"BOD conversion factor (~0.68)",units:["dimensionless"],toBase:[1]},"Px":{sym:"P_x",desc:"Net sludge production",units:["kg VSS/d"],toBase:[1]}},solvers:{"O2req":v=>({val:v.Q*(v.So-v.S)/v.f/1000-1.42*v.Px,rearr:"O2 [kg/d] = Q×(S_o-S)/f/1000 - 1.42×P_x",sub:"Q="+p(v.Q)+", S_o="+p(v.So)+", S="+p(v.S)+", f="+p(v.f)+", P_x="+p(v.Px)})}},
+],
+air:[
+  {id:"lapse",name:"Atmospheric Lapse Rate",formula:"Gamma_a = dT / dz",desc:"Actual lapse rate. Compare to -0.01 C/m. (EQN 8-18/8-19)",ref:"EQN 8-18/8-19",vars:{"Ga":{sym:"Gamma_a",desc:"Actual lapse rate",units:["C/m"],toBase:[1]},"dT":{sym:"dT",desc:"Temp change (T2-T1)",units:["C"],toBase:[1]},"dz":{sym:"dz",desc:"Height change (z2-z1)",units:["m"],toBase:[1]}},solvers:{"Ga":v=>({val:v.dT/v.dz,rearr:"Gamma_a = dT / dz",sub:"dT="+p(v.dT)+"C, dz="+p(v.dz)+"m"}),"dT":v=>({val:v.Ga*v.dz,rearr:"dT = Gamma_a × dz",sub:"Gamma_a="+p(v.Ga)+", dz="+p(v.dz)}),"dz":v=>({val:v.dT/v.Ga,rearr:"dz = dT / Gamma_a",sub:"dT="+p(v.dT)+", Gamma_a="+p(v.Ga)})}},
+  {id:"plume_rise",name:"Plume Rise (Holland)",formula:"dH = v_s×d×(1.5 + 2.68e-3×P×(Ts-Ta)/Ts×d) / u",desc:"Holland formula for stack plume rise. (EQN 8-21)",ref:"EQN 8-21",vars:{"dH":{sym:"dH",desc:"Plume rise",units:["m"],toBase:[1]},"vs":{sym:"v_s",desc:"Stack exit velocity",units:["m/s"],toBase:[1]},"d":{sym:"d",desc:"Stack diameter",units:["m"],toBase:[1]},"P":{sym:"P",desc:"Atm. pressure",units:["kPa"],toBase:[1]},"Ts":{sym:"Ts",desc:"Stack gas temp",units:["K"],toBase:[1]},"Ta":{sym:"Ta",desc:"Ambient air temp",units:["K"],toBase:[1]},"u":{sym:"u",desc:"Wind speed",units:["m/s"],toBase:[1]}},solvers:{"dH":v=>{const val=v.vs*v.d*(1.5+2.68e-3*v.P*(v.Ts-v.Ta)/v.Ts*v.d)/v.u;return{val,rearr:"dH = v_s×d×(1.5 + 2.68e-3×P×(Ts-Ta)/Ts×d) / u",sub:"v_s="+p(v.vs)+", d="+p(v.d)+", P="+p(v.P)+", Ts="+p(v.Ts)+", Ta="+p(v.Ta)+", u="+p(v.u)}}}},
+  {id:"eff_stack_h",name:"Effective Stack Height",formula:"H = h + dH",desc:"Physical height plus plume rise. (EQN 8-37)",ref:"EQN 8-37",vars:{"H":{sym:"H",desc:"Effective stack height",units:["m","ft"],toBase:[1,0.3048]},"h":{sym:"h",desc:"Physical stack height",units:["m","ft"],toBase:[1,0.3048]},"dH":{sym:"dH",desc:"Plume rise",units:["m","ft"],toBase:[1,0.3048]}},solvers:{"H":v=>({val:v.h+v.dH,rearr:"H = h + dH",sub:"h="+p(v.h)+"m, dH="+p(v.dH)+"m"}),"h":v=>({val:v.H-v.dH,rearr:"h = H - dH",sub:"H="+p(v.H)+"m, dH="+p(v.dH)+"m"}),"dH":v=>({val:v.H-v.h,rearr:"dH = H - h",sub:"H="+p(v.H)+"m, h="+p(v.h)+"m"})}},
+  {id:"sigma_y",name:"Horizontal Dispersion (sigma_y)",formula:"sigma_y = a × x^0.894",desc:"Pasquill-Gifford lateral spread. (EQN 8-23)",ref:"EQN 8-23",vars:{"sy":{sym:"sigma_y",desc:"Horizontal dispersion",units:["m"],toBase:[1]},"a":{sym:"a",desc:"Stability class coeff a",units:["dimensionless"],toBase:[1]},"x":{sym:"x",desc:"Downwind distance",units:["km","m"],toBase:[1,0.001]}},solvers:{"sy":v=>({val:v.a*Math.pow(v.x,0.894),rearr:"sigma_y = a × x^0.894",sub:"a="+p(v.a)+", x="+p(v.x)+"km"}),"x":v=>({val:Math.pow(v.sy/v.a,1/0.894),rearr:"x = (sigma_y/a)^(1/0.894)",sub:"sigma_y="+p(v.sy)+", a="+p(v.a)})}},
+  {id:"sigma_z",name:"Vertical Dispersion (sigma_z)",formula:"sigma_z = c × x^d + f",desc:"Pasquill-Gifford vertical spread. (EQN 8-26)",ref:"EQN 8-26",vars:{"sz":{sym:"sigma_z",desc:"Vertical dispersion",units:["m"],toBase:[1]},"c":{sym:"c",desc:"Stability coeff c",units:["dimensionless"],toBase:[1]},"x":{sym:"x",desc:"Downwind distance",units:["km","m"],toBase:[1,0.001]},"dd":{sym:"d",desc:"Stability coeff d",units:["dimensionless"],toBase:[1]},"f":{sym:"f",desc:"Stability coeff f",units:["dimensionless"],toBase:[1]}},solvers:{"sz":v=>({val:v.c*Math.pow(v.x,v.dd)+v.f,rearr:"sigma_z = c × x^d + f",sub:"c="+p(v.c)+", x="+p(v.x)+"km, d="+p(v.dd)+", f="+p(v.f)})}},
+  {id:"gauss_cl",name:"Gaussian Dispersion — Centerline",formula:"chi = [E/(pi×sy×sz×u)] × exp[-H^2/(2×sz^2)]",desc:"Ground-level concentration at centerline. (EQN 8-36)",ref:"EQN 8-36",vars:{"chi":{sym:"chi",desc:"Ground-level conc.",units:["ug/m3","mg/m3"],toBase:[1,1000]},"E":{sym:"E",desc:"Emission rate",units:["g/s","kg/h","mg/s"],toBase:[1,0.27778,0.001]},"sigy":{sym:"sigma_y",desc:"Horizontal dispersion",units:["m"],toBase:[1]},"sigz":{sym:"sigma_z",desc:"Vertical dispersion",units:["m"],toBase:[1]},"u":{sym:"u",desc:"Wind speed",units:["m/s","km/h"],toBase:[1,0.27778]},"H":{sym:"H",desc:"Effective stack height",units:["m","ft"],toBase:[1,0.3048]}},solvers:{"chi":v=>{const val=(v.E*1e6)/(Math.PI*v.sigy*v.sigz*v.u)*Math.exp(-0.5*Math.pow(v.H/v.sigz,2));return{val,rearr:"chi [ug/m3] = (E×1e6)/(pi×sigma_y×sigma_z×u) × exp[-H^2/(2×sigma_z^2)]",sub:"E="+p(v.E)+"g/s, sigma_y="+p(v.sigy)+"m, sigma_z="+p(v.sigz)+"m, u="+p(v.u)+"m/s, H="+p(v.H)+"m"}},"E":v=>{const val=(v.chi/1e6)*Math.PI*v.sigy*v.sigz*v.u/Math.exp(-0.5*Math.pow(v.H/v.sigz,2));return{val,rearr:"E [g/s] = (chi/1e6)×pi×sigma_y×sigma_z×u / exp[-H^2/(2×sigma_z^2)]",sub:"chi="+p(v.chi)+"ug/m3, sigma_y="+p(v.sigy)+"m, sigma_z="+p(v.sigz)+"m, u="+p(v.u)+"m/s, H="+p(v.H)+"m"}}}},
+  {id:"air_convert",name:"Air Pollutant Conversion (ppm ↔ ug/m3)",formula:"C[ug/m3] = ppm × (MW/22.414) × (273.15/T) × (P/101.325) × 1e6",desc:"Convert ppm to ug/m3. (EQN 8-5)",ref:"EQN 8-5",vars:{"Cugm3":{sym:"C [ug/m3]",desc:"Mass concentration",units:["ug/m3","mg/m3"],toBase:[1,1000]},"Cppm":{sym:"C [ppm]",desc:"Volume concentration",units:["ppm"],toBase:[1]},"MW":{sym:"MW",desc:"Molecular weight",units:["g/mol"],toBase:[1]},"T":{sym:"T",desc:"Air temperature",units:["K"],toBase:[1]},"Patm":{sym:"P",desc:"Atmospheric pressure",units:["kPa","atm"],toBase:[1,101.325]}},solvers:{"Cugm3":v=>{const val=v.Cppm*(v.MW/22.414)*(273.15/v.T)*(v.Patm/101.325)*1e6;return{val,rearr:"C[ug/m3] = ppm×(MW/22.414)×(273.15/T)×(P/101.325)×1e6",sub:"ppm="+p(v.Cppm)+", MW="+p(v.MW)+", T="+p(v.T)+"K, P="+p(v.Patm)+"kPa"}},"Cppm":v=>{const val=v.Cugm3/((v.MW/22.414)*(273.15/v.T)*(v.Patm/101.325)*1e6);return{val,rearr:"ppm = C[ug/m3] / [(MW/22.414)×(273.15/T)×(P/101.325)×1e6]",sub:"C="+p(v.Cugm3)+"ug/m3, MW="+p(v.MW)+", T="+p(v.T)+"K, P="+p(v.Patm)+"kPa"}}}},
+]
+};
+
+</script>
+</body>
+</html>

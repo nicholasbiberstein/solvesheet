@@ -1,0 +1,36 @@
+# ================================================================
+# NETLIFY.TOML — Deployment & Function Configuration
+# ================================================================
+
+[build]
+  publish   = "public"          # your HTML/CSS/JS files go in /public
+  functions = "netlify/functions"  # serverless functions directory
+
+# ── Redirect all routes to index.html (Single Page App routing) ──
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Environment variable placeholders ────────────────────────────
+# DO NOT put real values here — set them in Netlify dashboard instead:
+# Site Settings > Environment Variables
+#
+# Required variables to add in Netlify dashboard:
+#
+#   STRIPE_SECRET_KEY          sk_live_... (from Stripe dashboard)
+#   STRIPE_WEBHOOK_SECRET      whsec_...   (from Stripe webhook settings)
+#   FIREBASE_PROJECT_ID        your-project-id
+#   FIREBASE_CLIENT_EMAIL      firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
+#   FIREBASE_PRIVATE_KEY       -----BEGIN PRIVATE KEY-----\n...
+#   URL                        https://your-site.netlify.app (or your custom domain)
+
+# ── Node version for functions ────────────────────────────────────
+[functions]
+  node_bundler = "esbuild"
+
+# ── Dev server config (for local testing with `netlify dev`) ──────
+[dev]
+  port        = 8888
+  targetPort  = 3000
+  autoLaunch  = false

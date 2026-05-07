@@ -1,0 +1,14 @@
+{
+  "name": "solvesheet",
+  "version": "1.0.0",
+  "description": "SolveSheet — Engineering equation calculator platform",
+  "private": true,
+  "dependencies": {
+    "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",
+    "firebase-admin": "^12.0.0",
+    "stripe": "^14.0.0"
+  },
+  "engines": {
+    "node": "18"
+  }
+}
