@@ -703,21 +703,22 @@ const tabMeta = {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    // Fetch user document from Firestore
     const snap = await getDoc(doc(db, "users", user.uid));
     currentUserData = snap.exists() ? { uid: user.uid, ...snap.data() } : null;
     updateNav(true);
     updateDashboard();
-    // Check if returning from successful Stripe payment
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       history.replaceState({}, "", "/");
+      showPage("dashboard");
+    } else {
       showPage("dashboard");
     }
   } else {
     currentUser     = null;
     currentUserData = null;
     updateNav(false);
+    showPage("landing");
   }
   hideLoading();
 });
