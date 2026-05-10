@@ -41,6 +41,15 @@ window.COURSE_REGISTRY = [
     count:   32
   },
   {
+    id:      "ch101",
+    code:    "CH101",
+    name:    "Chemistry",
+    desc:    "Stoichiometry, thermodynamics, kinetics, equilibrium, acids/bases, electrochemistry",
+    file:    "courses/ch101.js",
+    status:  "live",
+    count:   35
+  },
+  {
     id:      "ph2x1",
     code:    "PH2X1",
     name:    "Physics",
