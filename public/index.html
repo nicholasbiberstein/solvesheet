@@ -523,7 +523,7 @@ input,select{font-family:var(--sans)}
       <div class="sidebar-divider"></div>
       <div class="sidebar-pinned">
         <div class="sidebar-label">Pinned Courses</div>
-        <button class="pin-course-btn" onclick="openCourse()"><span class="pin-code">EV350</span>&nbsp; Environmental Eng.</button>
+        <button class="pin-course-btn" onclick="openCourse('ev350')"><span class="pin-code">EV350</span>&nbsp; Environmental Eng.</button>
       </div>
       <div class="sidebar-footer">
         <div class="user-chip">
@@ -545,22 +545,9 @@ input,select{font-family:var(--sans)}
         <input type="text" placeholder="Search courses or equations..." oninput="filterCourses(this.value)">
       </div>
       <div class="dash-sec-title">Pinned Courses</div>
-      <div class="courses-grid">
-        <div class="course-card pinned" onclick="openCourse()">
-          <div class="cc-top"><div class="cc-code">EV350</div><button class="pin-btn pinned" onclick="event.stopPropagation()">📌</button></div>
-          <div class="cc-name">Environmental Engineering</div>
-          <div class="cc-meta">28 equations · 4 categories</div>
-          <div class="cc-bar"><div class="cc-bar-fill" style="width:100%"></div></div>
-        </div>
-      </div>
+      <div class="courses-grid" id="pinnedCoursesGrid"></div>
       <div class="dash-sec-title">All Courses</div>
-      <div class="courses-grid" id="allCoursesGrid">
-        <div class="course-card" onclick="openCourse()">
-          <div class="cc-top"><div class="cc-code">EV350</div><button class="pin-btn pinned" onclick="event.stopPropagation()">📌</button></div>
-          <div class="cc-name">Environmental Engineering</div>
-          <div class="cc-meta">28 equations · 4 categories</div>
-          <div class="cc-bar"><div class="cc-bar-fill" style="width:100%"></div></div>
-        </div>
+      <div class="courses-grid" id="allCoursesGrid"></div>
         <div class="course-card cs"><div class="cc-top"><div class="cc-code">CE301</div><span class="cc-soon">Soon</span></div><div class="cc-name">Structural Analysis</div><div class="cc-meta">Coming Q3 2025</div></div>
         <div class="course-card cs"><div class="cc-top"><div class="cc-code">ME310</div><span class="cc-soon">Soon</span></div><div class="cc-name">Thermodynamics</div><div class="cc-meta">Coming Q3 2025</div></div>
         <div class="course-card cs"><div class="cc-top"><div class="cc-code">CHE220</div><span class="cc-soon">Soon</span></div><div class="cc-name">Fluid Mechanics</div><div class="cc-meta">Coming Q4 2025</div></div>
@@ -708,6 +695,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUserData = snap.exists() ? { uid: user.uid, ...snap.data() } : null;
     updateNav(true);
     updateDashboard();
+    renderCourseGrid();        // ← add this line
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       history.replaceState({}, "", "/");
