@@ -1073,7 +1073,7 @@ window.showPage = function(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const el = document.getElementById("page-" + name);
   if (el) el.classList.add("active");
-  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
   if (name === "course") {
     document.getElementById("mobileTabSel").style.display = window.innerWidth <= 900 ? "block" : "none";
   }
