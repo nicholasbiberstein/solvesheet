@@ -349,17 +349,35 @@ input,select{font-family:var(--sans)}
 </div>
 
 <!-- SHARED NAV -->
+<!-- ============================================================
+  SOLVESHEET — TWO ADDITIONS TO index.html
+  Paste each block exactly where indicated.
+  Your email is pre-filled as: YOUR_EMAIL@example.com
+  Replace with your real address before pushing.
+  ============================================================ -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+  SNIPPET 1 — Replace the existing <nav> block (lines 352–362)
+  Adds "Request Course" and "Report Issue" nav buttons.
+  ══════════════════════════════════════════════════════════ -->
+
 <nav class="nav" id="mainNav">
   <div class="nav-logo">Solve<span>Sheet</span></div>
   <div class="nav-links">
     <button class="nav-link" onclick="showPage('landing')">Home</button>
     <button class="nav-link" onclick="scrollToSection('pricing')">Pricing</button>
     <button class="nav-link" id="navDashBtn" style="display:none" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-link" onclick="openModal('requestModal')">Request Course</button>
+    <button class="nav-link" onclick="openModal('reportModal')">Report Issue</button>
     <button class="nav-link" id="navLoginBtn" onclick="showPage('login')">Log In</button>
     <button class="nav-cta"  id="navSignupBtn" onclick="showPage('signup')">Start Free Trial</button>
     <button class="nav-cta"  id="navLogoutBtn" style="display:none" onclick="doLogout()">Log Out</button>
   </div>
 </nav>
+
+
+
 
 <!-- ══════════════ PAGE: LANDING ══════════════ -->
 <div id="page-landing" class="page">
@@ -1232,4 +1250,244 @@ function renderSidebarPinned(registry) {
 <script src="courses/ce371.js"></script>
 <script src="courses/Ss201.js"></script>
 <script src="courses/Ph2x1.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════
+  SNIPPET 2 — Paste BEFORE the closing </body> tag
+  Contains: modal HTML + CSS + JS for both modals.
+  ══════════════════════════════════════════════════════════ -->
+
+<!-- ── Modal styles ───────────────────────────────────────── -->
+<style>
+.ss-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+}
+.ss-modal-backdrop.open {
+  display: flex;
+}
+.ss-modal {
+  background: #1a1d27;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: 32px 28px 28px;
+  width: 100%;
+  max-width: 480px;
+  margin: 16px;
+  position: relative;
+}
+.ss-modal h3 {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 6px;
+}
+.ss-modal p.ss-modal-sub {
+  font-size: .83rem;
+  color: var(--mist);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+.ss-modal label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--fog);
+  margin-bottom: 5px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.ss-modal input,
+.ss-modal textarea,
+.ss-modal select {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 7px;
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: .88rem;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+.ss-modal input:focus,
+.ss-modal textarea:focus,
+.ss-modal select:focus {
+  border-color: var(--gold);
+}
+.ss-modal textarea { resize: vertical; min-height: 90px; }
+.ss-modal select option { background: #1a1d27; }
+.ss-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.ss-modal-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: none;
+  border: none;
+  color: var(--mist);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color .12s;
+}
+.ss-modal-close:hover { color: var(--white); }
+.ss-btn-cancel {
+  background: none;
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--fog);
+  font-size: .85rem;
+  font-weight: 500;
+  padding: 9px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.ss-btn-cancel:hover { border-color: rgba(255,255,255,.35); color: var(--white); }
+.ss-btn-send {
+  background: var(--gold);
+  color: var(--night);
+  font-size: .85rem;
+  font-weight: 700;
+  padding: 9px 22px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ss-btn-send:hover { background: var(--gold2); }
+</style>
+
+<!-- ── Request Course Modal ────────────────────────────────── -->
+<div class="ss-modal-backdrop" id="requestModal" onclick="backdropClose(event,'requestModal')">
+  <div class="ss-modal">
+    <button class="ss-modal-close" onclick="closeModal('requestModal')">✕</button>
+    <h3>Request a Course</h3>
+    <p class="ss-modal-sub">
+      Upload your equation sheet (PDF) and we'll add the course.
+      Requests from multiple students get prioritized first.
+    </p>
+
+    <label>Your Name</label>
+    <input type="text" id="req-name" placeholder="e.g. John Smith">
+
+    <label>Course Code &amp; Name</label>
+    <input type="text" id="req-course" placeholder="e.g. ME310 — Thermodynamics">
+
+    <label>Your School / Institution</label>
+    <input type="text" id="req-school" placeholder="e.g. West Point">
+
+    <label>Additional Notes (optional)</label>
+    <textarea id="req-notes" placeholder="Any context — textbook, professor, number of students in the class, etc."></textarea>
+
+    <p class="ss-modal-sub" style="font-size:.78rem; margin-bottom:10px;">
+      ⚠️ Clicking Send will open your email client with everything pre-filled.
+      Attach your PDF equation sheet before hitting Send.
+    </p>
+
+    <div class="ss-modal-actions">
+      <button class="ss-btn-cancel" onclick="closeModal('requestModal')">Cancel</button>
+      <button class="ss-btn-send" onclick="sendRequest()">Open Email ✉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Report Issue Modal ─────────────────────────────────── -->
+<div class="ss-modal-backdrop" id="reportModal" onclick="backdropClose(event,'reportModal')">
+  <div class="ss-modal">
+    <button class="ss-modal-close" onclick="closeModal('reportModal')">✕</button>
+    <h3>Report an Issue</h3>
+    <p class="ss-modal-sub">
+      Found a wrong equation, missing variable, or something else broken?
+      Tell us and we'll fix it fast.
+    </p>
+
+    <label>Course</label>
+    <input type="text" id="rep-course" placeholder="e.g. CE371 — Soil Mechanics">
+
+    <label>Equation Name or ID</label>
+    <input type="text" id="rep-eq" placeholder="e.g. Mohr-Coulomb Shear Strength">
+
+    <label>Issue Type</label>
+    <select id="rep-type">
+      <option value="">Select one…</option>
+      <option value="Wrong formula">Wrong formula</option>
+      <option value="Missing variable solver">Missing variable solver</option>
+      <option value="Incorrect unit conversion">Incorrect unit conversion</option>
+      <option value="Wrong answer / calculation error">Wrong answer / calculation error</option>
+      <option value="Typo or description error">Typo or description error</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label>Description</label>
+    <textarea id="rep-desc" placeholder="Describe the issue. Include what the correct result should be if you know it."></textarea>
+
+    <div class="ss-modal-actions">
+      <button class="ss-btn-cancel" onclick="closeModal('reportModal')">Cancel</button>
+      <button class="ss-btn-send" onclick="sendReport()">Open Email ✉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal JS ───────────────────────────────────────────── -->
+<script>
+// ── Replace this with your actual email address ───────────────
+var CONTACT_EMAIL = 'nicholas.biberstein@gmail.com';
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function backdropClose(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+function sendRequest() {
+  var name   = document.getElementById('req-name').value.trim()   || '(not provided)';
+  var course = document.getElementById('req-course').value.trim() || '(not provided)';
+  var school = document.getElementById('req-school').value.trim() || '(not provided)';
+  var notes  = document.getElementById('req-notes').value.trim()  || 'None';
+
+  var subject = encodeURIComponent('SolveSheet Course Request: ' + course);
+  var body = encodeURIComponent(
+    'Course Request\n' +
+    '==============\n' +
+    'Name:    ' + name   + '\n' +
+    'Course:  ' + course + '\n' +
+    'School:  ' + school + '\n' +
+    'Notes:   ' + notes  + '\n\n' +
+    '** Please attach your equation sheet PDF before sending. **'
+  );
+
+  window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+}
+
+function sendReport() {
+  var course = document.getElementById('rep-course').value.trim() || '(not provided)';
+  var eq     = document.getElementById('rep-eq').value.trim()     || '(not provided)';
+  var type   = document.getElementById('rep-type').value          || '(not selected)';
+  var desc   = document.getElementById('rep-desc').value.trim()   || '(not provided)';
+
+  var subject = encodeURIComponent('SolveSheet Issue Report: ' + course + ' — ' + eq);
+  var body = encodeURIComponent(
+    'Issue Report\n' +
+    '============\n' +
+    'Course:     ' + course + '\n' +
+    'Equation:   ' + eq     + '\n' +
+    'Issue Type: ' + type   + '\n' +
+    'Description:\n' + desc
+  );
+
+  window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+}
+</script>
 </html>
