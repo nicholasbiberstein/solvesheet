@@ -1097,6 +1097,8 @@ function hideLoading() {
   setTimeout(() => ol.style.display = "none", 400);
 }
 
+// Fallback — force hide loading screen after 3 seconds no matter what
+setTimeout(() => hideLoading(), 3000);
 // ================================================================
 // FAQ
 // ================================================================
