@@ -567,11 +567,7 @@ input,select{font-family:var(--sans)}
         <div class="cs-code">EV350</div>
         <h3>Environmental Engineering</h3>
       </div>
-      <div class="tab-list">
-        <button class="tab-item active" onclick="switchTab('fundamentals',this)"><span class="ti-dot"></span>EV Fundamentals</button>
-        <button class="tab-item" onclick="switchTab('drinking',this)"><span class="ti-dot"></span>Drinking Water</button>
-        <button class="tab-item" onclick="switchTab('wastewater',this)"><span class="ti-dot"></span>Wastewater</button>
-        <button class="tab-item" onclick="switchTab('air',this)"><span class="ti-dot"></span>Air Pollution</button>
+      <div class="tab-list" id="courseTabNav">
       </div>
     </aside>
     <main class="course-main">
@@ -908,17 +904,18 @@ function updateDashboard() {
   document.getElementById("dashUserPlan").textContent = planLabel;
 }
 
-window.openCourse = function(courseId) {
-  if (!hasAccess()) { showPage("paywall"); return; }
-  var courseKey = "COURSE_" + courseId.toUpperCase();
-  var course = window[courseKey];
-  if (!course) { console.error("Course not found:", courseId); return; }
-  currentCourse = course;
-  currentTab = course.tabs[0].id;
-  showPage("course");
-  renderCourseTab(course.tabs[0]);
-  document.querySelectorAll(".tab-item").forEach(function(b,i){ b.classList.toggle("active", i===0); });
-};
+// Rebuild tab buttons dynamically from the loaded course
+var tabNav = document.getElementById("courseTabNav");
+if (tabNav) {
+  tabNav.innerHTML = "";
+  course.tabs.forEach(function(t, i) {
+    var btn = document.createElement("button");
+    btn.className = "tab-item" + (i===0 ? " active" : "");
+    btn.innerHTML = '<span class="ti-dot"></span>' + esc(t.title);
+    btn.onclick = function(){ switchTab(t.id, btn); };
+    tabNav.appendChild(btn);
+  });
+}
 
 window.filterCourses = function(q) {
   q = q.toLowerCase();
