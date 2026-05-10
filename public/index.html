@@ -904,18 +904,6 @@ function updateDashboard() {
   document.getElementById("dashUserPlan").textContent = planLabel;
 }
 
-// Rebuild tab buttons dynamically from the loaded course
-var tabNav = document.getElementById("courseTabNav");
-if (tabNav) {
-  tabNav.innerHTML = "";
-  course.tabs.forEach(function(t, i) {
-    var btn = document.createElement("button");
-    btn.className = "tab-item" + (i===0 ? " active" : "");
-    btn.innerHTML = '<span class="ti-dot"></span>' + esc(t.title);
-    btn.onclick = function(){ switchTab(t.id, btn); };
-    tabNav.appendChild(btn);
-  });
-}
 
 window.filterCourses = function(q) {
   q = q.toLowerCase();
@@ -927,6 +915,34 @@ window.filterCourses = function(q) {
 // ================================================================
 // COURSE / CALCULATOR
 // ================================================================
+window.openCourse = function(courseId) {
+  if (!hasAccess()) { showPage("paywall"); return; }
+  var courseKey = "COURSE_" + courseId.toUpperCase();
+  var course = window[courseKey];
+  if (!course) { console.error("Course not found:", courseId); return; }
+  currentCourse = course;
+  currentTab = course.tabs[0].id;
+  showPage("course");
+  renderCourseTab(course.tabs[0]);
+  var tabNav = document.getElementById("courseTabNav");
+  if (tabNav) {
+    tabNav.innerHTML = "";
+    course.tabs.forEach(function(t, i) {
+      var btn = document.createElement("button");
+      btn.className = "tab-item" + (i===0 ? " active" : "");
+      btn.innerHTML = '<span class="ti-dot"></span>' + esc(t.title);
+      btn.onclick = function(){ switchTab(t.id, btn); };
+      tabNav.appendChild(btn);
+    });
+  }
+};
+
+window.filterCourses = function(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll("#allCoursesGrid .course-card").forEach(function(c) {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+};
 window.switchTab = function(tabId, btn) {
   if (!currentCourse) return;
   currentTab = tabId;
