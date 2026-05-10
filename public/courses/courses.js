@@ -23,6 +23,15 @@ window.COURSE_REGISTRY = [
     count:   20
   },
   {
+    id:      "ce371",
+    code:    "CE371",
+    name:    "Soil Mechanics & Foundations",
+    desc:    "Phase relationships, consolidation, stress, bearing capacity, deep foundations",
+    file:    "courses/ce371.js",
+    status:  "live",
+    count:   38
+  },
+  {
     id:      "ce301",
     code:    "CE301",
     name:    "Structural Analysis",
