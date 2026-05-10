@@ -41,6 +41,15 @@ window.COURSE_REGISTRY = [
     count:   32
   },
   {
+    id:      "ph2x1",
+    code:    "PH2X1",
+    name:    "Physics",
+    desc:    "Kinematics, Newton's laws, energy, momentum, oscillations, waves, gravitation",
+    file:    "courses/ph2x1.js",
+    status:  "live",
+    count:   43
+  },
+  {
     id:      "ce301",
     code:    "CE301",
     name:    "Structural Analysis",
