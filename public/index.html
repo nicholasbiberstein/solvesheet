@@ -1148,7 +1148,69 @@ function friendlyAuthError(code) {
   };
   return map[code] || "Something went wrong. Please try again.";
 }
+function renderCourseGrid() {
+  var registry = window.COURSE_REGISTRY;
+  if (!registry) return;
 
+  var allGrid    = document.getElementById("allCoursesGrid");
+  var pinnedGrid = document.getElementById("pinnedCoursesGrid");
+  if (!allGrid || !pinnedGrid) return;
+
+  allGrid.innerHTML    = "";
+  pinnedGrid.innerHTML = "";
+
+  registry.forEach(function(course) {
+    var isLive = course.status === "live";
+
+    var card = document.createElement("div");
+    card.className = "course-card" + (isLive ? "" : " cs");
+    card.id = "cc-" + course.id;
+
+    if (isLive) {
+      card.onclick = function(){ openCourse(course.id); };
+    }
+
+    card.innerHTML =
+      '<div class="cc-top">' +
+        '<div class="cc-code">' + esc(course.code) + '</div>' +
+        (isLive ? '<button class="pin-btn pinned" onclick="event.stopPropagation()">&#128204;</button>' : '<span class="cc-soon">Soon</span>') +
+      '</div>' +
+      '<div class="cc-name">' + esc(course.name) + '</div>' +
+      '<div class="cc-meta">' + (isLive ? course.count + ' equations' : course.desc) + '</div>' +
+      (isLive ? '<div class="cc-bar"><div class="cc-bar-fill" style="width:100%"></div></div>' : '');
+
+    allGrid.appendChild(card);
+
+    if (isLive) {
+      var pinCard = document.createElement("div");
+      pinCard.className = "course-card pinned";
+      pinCard.onclick = function(){ openCourse(course.id); };
+      pinCard.innerHTML = card.innerHTML;
+      pinnedGrid.appendChild(pinCard);
+    }
+  });
+
+  renderSidebarPinned(registry);
+}
+
+function renderSidebarPinned(registry) {
+  var sidebar = document.querySelector(".sidebar-pinned");
+  if (!sidebar) return;
+  var label = sidebar.querySelector(".sidebar-label");
+  sidebar.innerHTML = "";
+  if (label) sidebar.appendChild(label);
+
+  registry.forEach(function(course) {
+    if (course.status !== "live") return;
+    var btn = document.createElement("button");
+    btn.className = "pin-course-btn";
+    btn.onclick = function(){ openCourse(course.id); };
+    btn.innerHTML =
+      '<span class="pin-code">' + esc(course.code) + '</span>' +
+      '&nbsp; ' + esc(course.name);
+    sidebar.appendChild(btn);
+  });
+}
 </script>
 </body>
   <script src="courses/courses.js"></script>
