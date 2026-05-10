@@ -41,6 +41,15 @@ window.COURSE_REGISTRY = [
     count:   32
   },
   {
+    id:      "ma365",
+    code:    "MA365",
+    name:    "Engineering Mathematics",
+    desc:    "Linear algebra, numerical methods, ODEs, Fourier series, and PDEs",
+    file:    "courses/ma365.js",
+    status:  "live",
+    count:   37
+  },
+  {
     id:      "ch101",
     code:    "CH101",
     name:    "Chemistry",
