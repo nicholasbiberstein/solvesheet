@@ -352,7 +352,7 @@ input,select{font-family:var(--sans)}
   <div class="nav-logo">Solve<span>Sheet</span></div>
   <div class="nav-links">
     <button class="nav-link" onclick="showPage('landing')">Home</button>
-    <button class="nav-link" onclick="scrollTo('pricing')">Pricing</button>
+    <button class="nav-link" onclick="scrollToSection('pricing')">Pricing</button>
     <button class="nav-link" id="navDashBtn" style="display:none" onclick="showPage('dashboard')">Dashboard</button>
     <button class="nav-link" id="navLoginBtn" onclick="showPage('login')">Log In</button>
     <button class="nav-cta"  id="navSignupBtn" onclick="showPage('signup')">Start Free Trial</button>
@@ -369,7 +369,7 @@ input,select{font-family:var(--sans)}
     <p class="hero-sub">Stop hunting through equation sheets. SolveSheet gives you step-by-step solutions for every formula in your engineering curriculum — organized by course, solved instantly.</p>
     <div class="hero-actions">
       <button class="btn-primary" onclick="showPage('signup')">Start Free Trial — 7 Days</button>
-      <button class="btn-ghost" onclick="scrollTo('how')">See How It Works</button>
+      <button class="btn-ghost" onclick="scrollToSection('how')">See How It Works</button>
     </div>
     <p class="hero-note">No credit card required to start. Then $4.99/month.</p>
     <div class="hero-chips">
@@ -1079,7 +1079,7 @@ window.showPage = function(name) {
   }
 };
 
-window.scrollTo = function(id) {
+window.scrollToSection = function(id) {
   showPage("landing");
   setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
 };
