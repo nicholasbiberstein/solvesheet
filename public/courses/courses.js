@@ -32,6 +32,15 @@ window.COURSE_REGISTRY = [
     count:   38
   },
   {
+    id:      "ss201",
+    code:    "SS201",
+    name:    "Introduction to Economics",
+    desc:    "Supply & demand, elasticity, costs, profit, GDP, CPI, inflation, and growth",
+    file:    "courses/ss201.js",
+    status:  "live",
+    count:   32
+  },
+  {
     id:      "ce301",
     code:    "CE301",
     name:    "Structural Analysis",
