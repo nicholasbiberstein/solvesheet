@@ -14,6 +14,15 @@ window.COURSE_REGISTRY = [
     count:   28
   },
   {
+    id:      "ma206",
+    code:    "MA206",
+    name:    "Probability & Statistics",
+    desc:    "Hypothesis tests, confidence intervals, regression, and probability",
+    file:    "courses/ma206.js",
+    status:  "live",
+    count:   20
+  },
+  {
     id:      "ce301",
     code:    "CE301",
     name:    "Structural Analysis",
