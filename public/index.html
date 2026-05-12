@@ -501,6 +501,12 @@ input,select{font-family:var(--sans)}
       <div class="form-group"><label class="form-label">Full name</label><input class="form-input" type="text" id="signupName" placeholder="Jane Smith"></div>
       <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="signupEmail" placeholder="you@university.edu"></div>
       <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="signupPassword" placeholder="At least 8 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <div class="form-group">
+        <label class="form-label">Gift Code <span style="color:var(--mist);font-weight:400">(optional)</span></label>
+        <input class="form-input" type="text" id="signupGiftCode"
+          placeholder="e.g. GOARMY-Alec"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
       <button class="form-submit" id="signupBtn" onclick="doSignup()">Create Account &amp; Start Trial</button>
       <div class="auth-switch">Already have an account? <button onclick="showPage('login')">Sign in</button></div>
     </div>
@@ -762,15 +768,49 @@ async function ensureUserDoc(uid, data) {
 // AUTH: SIGN UP
 // ================================================================
 window.doSignup = async function() {
-  const name  = document.getElementById("signupName").value.trim();
-  const email = document.getElementById("signupEmail").value.trim();
-  const pass  = document.getElementById("signupPassword").value;
-  const errEl = document.getElementById("signupError");
-  const btn   = document.getElementById("signupBtn");
+  const name      = document.getElementById("signupName").value.trim();
+  const email     = document.getElementById("signupEmail").value.trim();
+  const pass      = document.getElementById("signupPassword").value;
+  const giftCode  = (document.getElementById("signupGiftCode")?.value || "").trim().toUpperCase();
+  const errEl     = document.getElementById("signupError");
+  const btn       = document.getElementById("signupBtn");
   errEl.classList.remove("visible");
 
-  if (!name || !email || !pass) { errEl.textContent = "Please fill in all fields."; errEl.classList.add("visible"); return; }
-  if (pass.length < 8) { errEl.textContent = "Password must be at least 8 characters."; errEl.classList.add("visible"); return; }
+  if (!name || !email || !pass) {
+    errEl.textContent = "Please fill in all fields.";
+    errEl.classList.add("visible"); return;
+  }
+  if (pass.length < 8) {
+    errEl.textContent = "Password must be at least 8 characters.";
+    errEl.classList.add("visible"); return;
+  }
+
+  // Validate gift code BEFORE creating the account
+  let giftCodeData = null;
+  if (giftCode) {
+    btn.disabled = true; btn.textContent = "Checking code...";
+    try {
+      const codeSnap = await getDoc(doc(db, "gift_codes", giftCode));
+      if (!codeSnap.exists()) {
+        errEl.textContent = "That gift code doesn't exist. Check the spelling and try again.";
+        errEl.classList.add("visible");
+        btn.disabled = false; btn.textContent = "Create Account & Start Trial";
+        return;
+      }
+      giftCodeData = codeSnap.data();
+      if (giftCodeData.usedBy !== null && giftCodeData.usedBy !== undefined) {
+        errEl.textContent = "That gift code has already been redeemed. Each code can only be used once.";
+        errEl.classList.add("visible");
+        btn.disabled = false; btn.textContent = "Create Account & Start Trial";
+        return;
+      }
+    } catch (e) {
+      errEl.textContent = "Couldn't verify gift code. Check your connection and try again.";
+      errEl.classList.add("visible");
+      btn.disabled = false; btn.textContent = "Create Account & Start Trial";
+      return;
+    }
+  }
 
   btn.disabled = true; btn.textContent = "Creating account...";
 
@@ -781,27 +821,48 @@ window.doSignup = async function() {
     const isAdm = ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
     const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 7);
 
-    await ensureUserDoc(cred.user.uid, {
-      name,
-      email,
-      role:       isAdm ? "admin" : "user",
-      subscribed: isAdm ? true : false,
-      plan:       isAdm ? "admin" : null,
-      trialEnd:   isAdm ? null : trialEnd.toISOString(),
-      createdAt:  new Date().toISOString(),
-    });
+    let userData;
+    if (isAdm) {
+      userData = {
+        name, email, role: "admin", subscribed: true,
+        plan: "admin", trialEnd: null, giftCode: null,
+        createdAt: new Date().toISOString(),
+      };
+    } else if (giftCode && giftCodeData) {
+      userData = {
+        name, email, role: "user", subscribed: true,
+        plan: "gift", trialEnd: null, giftCode: giftCode,
+        createdAt: new Date().toISOString(),
+      };
+    } else {
+      userData = {
+        name, email, role: "user", subscribed: false,
+        plan: null, trialEnd: trialEnd.toISOString(), giftCode: null,
+        createdAt: new Date().toISOString(),
+      };
+    }
 
-    // Fetch the doc we just created
+    await ensureUserDoc(cred.user.uid, userData);
+
+    // Lock the gift code permanently to this user
+    if (giftCode && giftCodeData) {
+      await updateDoc(doc(db, "gift_codes", giftCode), {
+        usedBy:      cred.user.uid,
+        usedByEmail: email,
+        usedAt:      new Date().toISOString(),
+      });
+    }
+
     const snap = await getDoc(doc(db, "users", cred.user.uid));
     currentUserData = { uid: cred.user.uid, ...snap.data() };
 
-    // Admins go straight to dashboard; others see paywall
-    if (isAdm) {
+    if (isAdm || (giftCode && giftCodeData)) {
       updateDashboard();
       showPage("dashboard");
     } else {
       showPage("paywall");
     }
+
   } catch (e) {
     errEl.textContent = friendlyAuthError(e.code);
     errEl.classList.add("visible");
